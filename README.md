@@ -27,6 +27,7 @@ The repository is structured as follows:
             - parking_occupancy_history.csv
         /scripts
             - bokeh_plot.py
+            - bokeh_server.py
         /templates
             - index.html
         - flask_app.py
@@ -37,6 +38,7 @@ The repository is structured as follows:
 - **`parking_general_information.csv`**: dataset with general information about parking in Lyon.
 - **`parking_occupancy_history.csv`**: datatset with history of available parking spaces in the parking.
 - **`bokeh_plot.py`**: create Bokeh plots of the data.
+- **`bokeh_server.py`**: create Bokeh plots of the data from a PostgreSQL database and update graph every 10 seconds.
 - **`index.html`**: templates served by Flask.
 - **`flask_app.py`**: main script of the Flask App.
 - **`README.md`**: This documentation file.

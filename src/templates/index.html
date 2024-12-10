@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse en temps réel de l'occupation de parkings à Lyon</title>
+    
+    <!-- Manually added Bokeh scripts -->
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-3.6.2.min.js"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-widgets-3.6.2.min.js"></script>
+    <script src="https://cdn.bokeh.org/bokeh/release/bokeh-tables-3.6.2.min.js"></script>
+    
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+        }
+        .bokeh-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin: 20px 0;
+            text-align: center;
+            color: #333;
+        }
+    </style>
+    {{ script|safe }}
+</head>
+<body>
+    <h1>Analyse en temps réel de l'occupation de parkings à Lyon</h1>
+    <div class="bokeh-row">
+        {{ div|safe }}
+    </div>
+</body>
+</html>

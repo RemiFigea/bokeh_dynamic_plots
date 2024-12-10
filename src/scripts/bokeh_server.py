@@ -37,7 +37,7 @@ HOST = "localhost"
 PORT = "5432"
 DATABASE = "parking_data"
 USER = "postgres"
-PASSWORD = "****"
+PASSWORD = os.getenv('PGPASSWORD')
 TABLE_REALTIME = "parking_data"
 
 
@@ -305,7 +305,7 @@ def generate_line_plot(source_line_plot):
         ],
         formatters={'@date': 'datetime'},
     )
-
+    
     p_line = figure(
         title=f"Historique des places disponibles", 
         height = 400,
@@ -314,7 +314,6 @@ def generate_line_plot(source_line_plot):
         x_axis_label="Date", 
         y_axis_label="Nombre de places disponibles",
         tools=[hover_line, "crosshair", "pan", "wheel_zoom"],
-        
     )
 
     p_line.line(
@@ -322,7 +321,7 @@ def generate_line_plot(source_line_plot):
         "nombre_de_places_disponibles",
         source=source_line_plot,
         line_width=2,
-        legend_field = "parking"
+        legend_field = "parking",
         )
 
     p_line.xaxis.formatter = DatetimeTickFormatter(days="%d/%m/%Y")

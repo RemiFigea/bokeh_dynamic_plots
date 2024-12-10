@@ -1,6 +1,6 @@
 import ast
 from bokeh.layouts import column, row
-from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, DateFormatter, DatetimeTickFormatter
+from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, Div, DatetimeTickFormatter
 from bokeh.models import HTMLTemplateFormatter, HoverTool, IndexFilter, TableColumn, TapTool
 from bokeh.plotting import curdoc, figure, show
 from bokeh.transform import linear_cmap
@@ -470,8 +470,9 @@ source_map.selected.js_on_change('indices', callback)
 
 curdoc().add_periodic_callback(update_sources, 10000)
 
+title = Div(text='<h1 style="text-align:center; color:black;font-size: 48px;">Analyse en temps réel de l\'occupation de parkings à Lyon</h1>')
 first_row = row([p_map, p_line_plot])
-bokeh_layout = column([first_row, data_table, data_table_url])
+bokeh_layout = column([title, first_row, data_table, data_table_url])
 
 curdoc().add_root(bokeh_layout)
 #show(bokeh_layout)

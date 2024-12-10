@@ -8,10 +8,8 @@ import datetime as dt
 import math
 import os
 import pandas as pd
-#from sqlalchemy import create_engine
 import xyzservices.providers as xyz
 
-# GENERAL_INFO_URL = "https://data.grandlyon.com/fr/datapusher/ws/rdata/lpa_mobilite.parking_lpa_2_0_0/all.csv?maxfeatures=-1&filename=parkings-lyon-parc-auto-metropole-lyon-v2"
 DIRNAME = os.path.dirname(__file__)
 REALTIME_CSV_FILEPATH = os.path.join(DIRNAME, "../data/parking_occupancy_history.csv")
 GENERAL_INFO_CSV_FILEPATH = os.path.join(DIRNAME, "../data/parking_general_information.csv")
@@ -19,15 +17,6 @@ GENERAL_INFO_CSV_FILEPATH = os.path.join(DIRNAME, "../data/parking_general_infor
 LATITUDE_LYON = 45.764043
 LONGITUDE_LYON = 4.835659
 PARKING_ID_HOMEPAGE = 'LPA0740'
-
-# # Congigurate PostgreSQL connexion
-# HOST = "localhost"
-# PORT = "5432"
-# DATABASE = "parking_data"
-# USER = "postgres"
-# PASSWORD = "****"
-# TABLE_REALTIME = "parking_data"
-
 
 def get_address(string_dict):
     """

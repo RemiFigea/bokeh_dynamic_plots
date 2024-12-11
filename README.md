@@ -8,13 +8,15 @@ This repository demonstrates how Bokeh can be used to visualize parking occupanc
 
 1. dynamic_plots_from_csv_files
 
-- Focus: Visualizing data sourced from **CSV files**
-- Deployment: Uses **Flask**
+    - Focus: Visualizing data sourced from **CSV files**
+
+    - Deployment: Uses **Flask**
 
 2. realtime_dynamic_plots_from_SQL_database
 
-- Focus: Visualizing **real-time data** sourced from a **PostgreSQL Database**
-- Deployment: Utilizes the **Bokeh server**
+    - Focus: Visualizing **real-time data** sourced from a **PostgreSQL Database**
+
+    - Deployment: Utilizes the **Bokeh server**
 
 ### Data Sources
 
@@ -57,8 +59,14 @@ The repository is structured as follows:
 
 Each sub-repository contains its own README.md with specific instructions tailored to:
 
-- dynamic_plots_from_csv_files: Instructions to run Flask and visualize data from CSV files.
-- realtime_dynamic_plots_from_SQL_database: Instructions to set up the PostgreSQL database, populate it with data, and run the Bokeh server for real-time visualizations.
+- dynamic_plots_from_csv_files:
+
+    Instructions to run Flask and visualize data from CSV files.
+
+
+- realtime_dynamic_plots_from_SQL_database:
+
+    Instructions to set up the PostgreSQL database, populate it with data, and run the Bokeh server for real-time visualizations.
 
 Make sure to follow the appropriate README.md located in the corresponding subdirectory.
    

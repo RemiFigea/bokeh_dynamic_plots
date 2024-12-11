@@ -16,13 +16,12 @@ All data are sourced from the following website: https://data.grandlyon.com
 
 We previously have created a PostgreSQL database
 
-
-
 1. **Parking general information**:
 
 - **File**: parking_general_information.csv
 - Contains general information about parking facilities in Lyon.
 - **Download link**: https://data.grandlyon.com/fr/datapusher/ws/rdata/lpa_mobilite.parking_lpa_2_0_0/all.csv?maxfeatures=-1&filename=parkings-lyon-parc-auto-metropole-lyon-v2
+
 
 2. **Parking occupancy history**:
 

@@ -4,75 +4,63 @@ Welcome to the **Bokeh Dynamic plots** repository! This project leverages Bokeh,
 
 ## Overview
 
-This repository demonstrates the use of Bokeh for visualization of data related to parking occupancy in Lyon.
+This repository demonstrates how Bokeh can be used to visualize parking occupancy data in Lyon. It is divided into two sub-repositories, each focusing on different data sources and deployment methods:
+
+1. dynamic_plots_from_csv_files
+
+- Focus: Visualizing data sourced from **CSV files**
+- Deployment: Uses **Flask**
+
+2. realtime_dynamic_plots_from_SQL_database
+
+- Focus: Visualizing **real-time data** sourced from a **PostgreSQL Database**
+- Deployment: Utilizes the **Bokeh server**
 
 ### Data Sources
-site web: https://data.grandlyon.com/fr/datapusher/ws/rdata/lpa_mobilite.parking_lpa_2_0_0/all.csv?maxfeatures=-1&filename=parkings-lyon-parc-auto-metropole-lyon-v2
 
-- **Parking general information**:
-Lyon Parking Data (CSV)
-Saved locally as parking_general_information.csv.
-
-- **Parking occupancy history**:
-Real-time data collected over a short period using API requests, saved as parking_occupancy_history.csv.
+All data are sourced from the following website: https://data.grandlyon.com
 
 ## Repository Structure
 
 The repository is structured as follows:
 ```
 /bokeh_dynamic_plots
-    /src
-        /data
-            - parking_general_information.csv
-            - parking_occupancy_history.csv
-        /scripts
-            - bokeh_plot.py
-            - bokeh_server.py
-        /templates
-            - index.html
-        - flask_app.py
-    - Dockerfiles
-    - README.md
-    - requirements.txt
+    /dynamic_plots_from_csv_files
+        /src
+            /data
+                - parking_general_information.csv     # General parking info dataset
+                - parking_occupancy_history.csv     # Historical occupancy data
+            /scripts
+                - bokeh_plot.py                     # Bokeh plot creation
+            /templates
+                - index.html                         # Flask HTML template
+            - flask_app.py                         # Flask main application
+        - Dockerfile                               # Docker setup files
+        - README.md                                 # Documentation for this subrepo
+        - requirements.txt                         # Project dependencies
 
-- **`parking_general_information.csv`**: dataset with general information about parking in Lyon.
-- **`parking_occupancy_history.csv`**: datatset with history of available parking spaces in the parking.
-- **`bokeh_plot.py`**: create Bokeh plots of the data.
-- **`bokeh_server.py`**: create Bokeh plots of the data from a PostgreSQL database and update graph every 10 seconds.
-- **`index.html`**: templates served by Flask.
-- **`flask_app.py`**: main script of the Flask App.
-- **`README.md`**: This documentation file.
-- **`requirements.txt`**
+    /realtime_dynamic_plots_from_SQL_database
+        /src
+            /data
+                - parking_general_information.csv     # General parking info dataset
+            /scripts
+                - bokeh_server.py                   # Bokeh server setup
+        - Dockerfile                               # Docker setup files
+        - README.md                                 # Documentation for this subrepo
+        - requirements.txt                         # Project dependencies
+
+    - README.md                                     # Main documentation file
+
 ```
-
-## Access the Deployed App
-You can find the deployed application on Hugging Face at the following address:
-https://huggingface.co/spaces/Figea/bokeh_dynamic_plots
-
-
 
 ## Getting Started
 
-To run the Flask application, you only need the contents of the docker_image folder and Docker installed on your computer. Follow the steps below to get started:
+Each sub-repository contains its own README.md with specific instructions tailored to:
 
+- dynamic_plots_from_csv_files: Instructions to run Flask and visualize data from CSV files.
+- realtime_dynamic_plots_from_SQL_database: Instructions to set up the PostgreSQL database, populate it with data, and run the Bokeh server for real-time visualizations.
 
-1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/RemiFigea/bokeh_dynamic_plots.git
-   
-2. **Navigate to the repository folder:**
-   ```bash
-   cd /bokeh_dynamic_plots
-
-3. **Run the application using Docker:**
-   ```bash
-   docker build -t bokeh_dynamic_plots .
-   docker run -p 7860:7860 bokeh_dynamic_plots
-
-4. **Access the Application:**
-   - Open your web browser and navigate to http://localhost:7860.
-
-   - The graphs will be displayed. You can interact with it.
+Make sure to follow the appropriate README.md located in the corresponding subdirectory.
    
 ## Contributing
 

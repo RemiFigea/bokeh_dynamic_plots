@@ -8,8 +8,6 @@ app = Flask(__name__)
 @app.route('/')
 def index():
 
-  
-    # Embed components
     script, div = components(bokeh_layout)
     return render_template('index.html', script=script, div=div)
 

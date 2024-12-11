@@ -1,14 +1,13 @@
 import ast
 from bokeh.layouts import column, row
-from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, Div, DatetimeTickFormatter
+from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, DatetimeTickFormatter
 from bokeh.models import HTMLTemplateFormatter, HoverTool, IndexFilter, TableColumn, TapTool
-from bokeh.plotting import curdoc, figure, show
+from bokeh.plotting import figure
 from bokeh.transform import linear_cmap
 import datetime as dt
 import math
 import os
 import pandas as pd
-from sqlalchemy import create_engine
 import xyzservices.providers as xyz
 
 DIRNAME = os.path.dirname(__file__)
@@ -31,15 +30,6 @@ LATITUDE_LYON = 45.764043
 LONGITUDE_LYON = 4.835659
 CIRCLE_SIZE_BOUNDS = (10, 25)
 ZOOM_LEVEL = 10000
-
-# Congigurate PostgreSQL connexion
-HOST = "localhost"
-PORT = "5432"
-DATABASE = "parking_data"
-USER = "postgres"
-PASSWORD = os.getenv('PGPASSWORD')
-TABLE_REALTIME = "parking_data"
-
 
 def get_address(string_dict):
     """
@@ -184,18 +174,23 @@ def prepare_general_info_dataframe(csv_filepath):
     )
     return df_general_info
 
-def get_realtime_dataframe():
-    engine = create_engine(f"postgresql://{USER}:{PASSWORD}@{HOST}:{PORT}/{DATABASE}")
-    query = f"SELECT * FROM {TABLE_REALTIME};"
-    
-    df_realtime = pd.read_sql_query(query, engine)
+def prepare_global_dataframe(df_general_info, df_parking_history):
+    """
+    Merges general parking information with parking_history data.
 
-    return df_realtime
+    Combines data from `df_general_info` and `df_parking_history` into a single DataFrame, 
+    enriching historical data with additional details like parking address, capacity, 
+    and coordinates. Formats columns, renames for clarity, and sorts by date.
 
-def prepare_global_dataframe(df_general_info, df_realtime):
-    
+    Parameters:
+    - df_general_info (pd.DataFrame): DataFrame containing general parking information.
+    - df_parking_history (pd.DataFrame): DataFrame containing historical parking data.
+
+    Returns:
+    - pd.DataFrame: A merged and formatted DataFrame for further analysis or visualization.
+    """
     df_global = pd.merge(
-        left=df_realtime,
+        left=df_parking_history,
         right=df_general_info[['identifier',
                             'parking',
                             'site_web',
@@ -223,7 +218,21 @@ def prepare_global_dataframe(df_general_info, df_realtime):
 
     return df_global
 
-def prepare_sources(df_global, initial_parking_id, data_table_columns_filter=DATA_TABLE_COLUMNS_FILTER):
+def prepare_sources(df_global, initial_parking_id=PARKING_ID_HOMEPAGE, data_table_columns_filter=DATA_TABLE_COLUMNS_FILTER):
+    """
+    Prepares data sources for visualizations.
+
+    Generates ColumnDataSource objects for the global data, line plot, map, 
+    and a transposed table based on the most recent values and selected parking.
+
+    Parameters:
+    - df_global (pd.DataFrame): The merged global DataFrame with parking data.
+    - initial_parking_id (int): ID of the parking lot to initialize plots.
+    - data_table_columns_filter (list): List of columns to include in the table.
+
+    Returns:
+    - tuple: Sources for global data, line plot, map, and transposed table.
+    """
 
     df_more_recent_value = df_global.groupby('parking_id').agg({'date': 'max'})
 
@@ -246,6 +255,16 @@ def prepare_sources(df_global, initial_parking_id, data_table_columns_filter=DAT
     return source_original, source_line_plot, source_map, source_table
 
 def add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOUNDS):
+    """
+    Adds normalized circle sizes to the source map based on available spaces.
+
+    Parameters:
+    - source_map (ColumnDataSource): Map data source with parking availability.
+    - circle_size_bounds (tuple): Min and max bounds for circle sizes.
+
+    Returns:
+    - None: Updates `source_map` in place with a `normalized_circle_size` field.
+    """
 
     available_spaces_range = (
         min(source_map.data["nombre_de_places_disponibles"]),
@@ -256,6 +275,17 @@ def add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOU
     source_map.data['normalized_circle_size'] = normalized_circle_sizes
 
 def generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL):
+    """
+    Creates an interactive map plot with parking data.
+
+    Parameters:
+    - source_map (ColumnDataSource): Data source for map visualization.
+    - lyon_x, lyon_y (float): Mercator coordinates for map center.
+    - zoom_level (float): Zoom level for the map.
+
+    Returns:
+    - Figure: Bokeh map plot with hover and selection tools.
+    """
     color_mapper = linear_cmap(field_name="nombre_de_places_disponibles",
                             palette="Viridis256",
                             low=min(source_map.data["nombre_de_places_disponibles"]),
@@ -298,6 +328,15 @@ def generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL):
     return p_map
 
 def generate_line_plot(source_line_plot):
+    """
+    Creates a line plot to show the history of available parking spaces.
+
+    Parameters:
+    - source_line_plot (ColumnDataSource): Data source for the line plot.
+
+    Returns:
+    - Figure: Bokeh line plot with hover and zoom tools.
+    """
     hover_line = HoverTool(
         tooltips = [
             ('Places disponibles', "@nombre_de_places_disponibles"),
@@ -329,7 +368,15 @@ def generate_line_plot(source_line_plot):
     return p_line
 
 def generate_data_table(source_table):
+    """
+    Creates a data table to display parking information.
 
+    Parameters:
+    - source_table (ColumnDataSource): Data source for the table.
+
+    Returns:
+    - DataTable: A Bokeh data table displaying parking details.
+    """
     columns_tranposed = [
         TableColumn(field="Field", title="Champ"),
         TableColumn(field="Value", title="Valeur"),
@@ -348,6 +395,15 @@ def generate_data_table(source_table):
     return data_table
 
 def generate_data_table_url(source_line_plot):
+    """
+    Creates a data table with clickable URLs for parking websites.
+
+    Parameters:
+    - source_line_plot (ColumnDataSource): Data source for the table.
+
+    Returns:
+    - DataTable: A Bokeh data table displaying parking website links.
+    """
     cds_view = CDSView()
     cds_view.filter = IndexFilter([0])
 
@@ -369,40 +425,10 @@ def generate_data_table_url(source_line_plot):
     
     return data_url
 
-def get_current_parking_id(attr, old, new):
-    global current_parking_id
-    if new:
-        selected_index = new[0]
-        current_parking_id = source_map.data['parking_id'][selected_index]
-
-def update_sources():
-
-    df_realtime = get_realtime_dataframe()
-    df_global = prepare_global_dataframe(df_general_info, df_realtime)
-    df_line_plot = df_global[df_global['parking_id']==current_parking_id]
-
-    df_more_recent_value = df_global.groupby('parking_id').agg({'date': 'max'})
-    df_map = df_global.merge(df_more_recent_value , on=['parking_id', 'date'])
-    
-    df_table = df_map[df_map['parking_id']==current_parking_id]
-
-    transposed_data = {
-        "Field": DATA_TABLE_COLUMNS_FILTER,
-        "Value": [df_table.iloc[0][col] for col in DATA_TABLE_COLUMNS_FILTER]
-    }
-
-    source_original.data = df_global.to_dict('list')
-    source_line_plot.data = df_line_plot.to_dict('list')
-    source_map.data = df_map.to_dict('list')
-    source_table.data = transposed_data
-    
-    add_circle_size_to_source_map(source_map)
-
-current_parking_id = PARKING_ID_HOMEPAGE
 df_general_info = prepare_general_info_dataframe(GENERAL_INFO_CSV_FILEPATH)
-df_realtime = get_realtime_dataframe()
-df_global = prepare_global_dataframe(df_general_info, df_realtime)
-source_original, source_line_plot, source_map, source_table = prepare_sources(df_global, initial_parking_id=current_parking_id)
+df_parking_history = pd.read_csv(REALTIME_CSV_FILEPATH, index_col='id', parse_dates=[4])
+df_global = prepare_global_dataframe(df_general_info, df_parking_history)
+source_original, source_line_plot, source_map, source_table = prepare_sources(df_global)
 add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOUNDS)
 lyon_x, lyon_y = latlon_to_webmercator(LATITUDE_LYON, LONGITUDE_LYON)
 p_map = generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL)
@@ -465,14 +491,7 @@ callback = CustomJS(
     """
     )
 
-source_map.selected.on_change('indices', get_current_parking_id)
 source_map.selected.js_on_change('indices', callback)
 
-curdoc().add_periodic_callback(update_sources, 10000)
-
-title = Div(text='<h1 style="text-align:center; color:black;font-size: 48px;">Analyse en temps réel de l\'occupation de parkings à Lyon</h1>')
 first_row = row([p_map, p_line_plot])
-bokeh_layout = column([title, first_row, data_table, data_table_url])
-
-curdoc().add_root(bokeh_layout)
-#show(bokeh_layout)
+bokeh_layout = column([first_row, data_table, data_table_url])

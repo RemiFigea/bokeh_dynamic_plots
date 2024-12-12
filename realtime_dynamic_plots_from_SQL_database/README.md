@@ -39,15 +39,22 @@ The sub-repository is structured as follows:
             - parking_general_information.csv
         /scripts
             - bokeh_server.py
+            - populate_db.py
+    /test
+        - test_populate_db.py
     - Dockerfile
     - README.md
     - requirements.txt
+    - requirements-dev.txt
 
 - **`parking_general_information.csv`**: dataset with general information about parking in Lyon.
 - **`bokeh_server.py`**: create Bokeh plots on a Bokeh server.
+- **`populate_db.py`**: automates data fetching and populates the PostgreSQL database 
+- **`test_populate_db.py`**: unit test for populate_db.py
 - **`Dockerfile`**: Configuration to build the Docker image.
 - **`README.md`**: This documentation file.
-- **`requirements.txt`**
+- **`requirements.txt`**: dependencies for the project.
+- **`requirements_dev.txt`**: development dependencies.
 ```
 
 ## Getting Started
@@ -78,10 +85,10 @@ For a local session, use the following command:
     ```
 
 3. Populate the Table Automatically.
-Automate data fetching every 4 minutes by sending requests to:
 
-    **API URL**:
-    "https://download.data.grandlyon.com/files/rdata/lpa_mobilite.donnees/parking_temps_reel.json".
+    - Run the populate_db.py script to fetch real-time data.
+
+    - Ensure the PGSQL_CONFIG_DICT variable in the script is properly configured to connect to your database.
 
 
 ### Step 2: Running the Bokeh Application

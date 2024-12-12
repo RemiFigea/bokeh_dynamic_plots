@@ -46,10 +46,14 @@ The repository is structured as follows:
             /data
                 - parking_general_information.csv     # General parking info dataset
             /scripts
-                - bokeh_server.py                   # Bokeh server setup
+                - bokeh_server.py                   # Bokeh plot creation
+                - populate_db.py                    # Fetch data and populate a PostgreSQL database
+        /test
+            - test_populate_db.py                   # Unit test for populate_db.py       
         - Dockerfile                               # Docker setup files
         - README.md                                 # Documentation for this subrepo
         - requirements.txt                         # Project dependencies
+        - requirements_dev.txt                         # Development dependencies
 
     - README.md                                     # Main documentation file
 

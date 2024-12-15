@@ -1,8 +1,8 @@
-# DYNAMIC PLOTS FROM CSV FILES
+# PLOTS FROM CSV FILES
 
-Welcome to the **Dynamic Plots from CSV Files** sub-repository!
+Welcome to the "**plots from csv files**" sub-repository!
 
-This sub-repository is part of the main  **Bokeh Dynamic Plots** project. The main repository uses Bokeh, a powerful Python library for creating interactive visualizations, to dynamically display parking occupancy data for parking facilities in Lyon, France.
+This sub-repository is part of the main  "**bokeh dynamic plots**" repository. The main repository uses Bokeh, a powerful Python library for creating interactive visualizations, to dynamically display parking occupancy data for parking facilities in Lyon, France.
 
 In this subsection, we focus on visualizing data sourced specifically from **CSV files** and use **Flask** for deployement.
 
@@ -30,13 +30,13 @@ All data are sourced from the following website: https://data.grandlyon.com
 
 The sub-repository is structured as follows:
 ```
-/bokeh_dynamic_plots_from_csv_files
+/plots_from_csv
     /src
         /data
             - parking_general_information.csv
             - parking_occupancy_history.csv
         /scripts
-            - bokeh_plot.py
+            - plot.py
         /templates
             - index.html
         - flask_app.py
@@ -46,7 +46,7 @@ The sub-repository is structured as follows:
 
 - **`parking_general_information.csv`**: dataset with general information about parking in Lyon.
 - **`parking_occupancy_history.csv`**: datatset with history of available parking spaces in the parking.
-- **`bokeh_plot.py`**: create Bokeh plots of the data.
+- **`plot.py`**: create a Bokeh Layout from Bokeh Figure objects of the data.
 - **`index.html`**: templates served by Flask.
 - **`flask_app.py`**: main script of the Flask App.
 - **`README.md`**: This documentation file.
@@ -71,12 +71,12 @@ To run the Flask application, you only need the contents of the docker_image fol
 2. **Navigate to the folder dynamic_plots_from_csv_files:**
    ```bash
    cd bokeh_dynamic_plots
-   cd dynamic_plots_from_csv_files
+   cd plots_from_csv
 
 3. **Run the application using Docker:**
    ```bash
-   docker build -t dynamic_plots_from_csv_image .
-   docker run -p 7860:7860 dynamic_plots_from_csv_image
+   docker build -t plot_from_csv_image .
+   docker run -p 7860:7860 plot_from_csv_image
 
 4. **Access the Application:**
    - Open your web browser and navigate to http://localhost:7860.

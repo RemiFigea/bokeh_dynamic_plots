@@ -1,6 +1,6 @@
 # BOKEH DYNAMIC PLOTS
 
-Welcome to the **bokeh dynamic plots** repository! This project leverages Bokeh, a powerful Python library for creating interactive visualizations, to dynamically display parking occupancy data for parking facilities in Lyon, France.
+Welcome to the "**bokeh dynamic plots**" repository! This project leverages Bokeh, a powerful Python library for creating interactive visualizations, to dynamically display parking occupancy data for parking facilities in Lyon, France.
 
 ## Overview
 
@@ -30,43 +30,43 @@ The repository is structured as follows:
     /plots_from_csv
         /src
             /data
-                - parking_general_information.csv     # Dataset with general information
-                - parking_occupancy_history.csv     # Dataset with parking historical occupancy
+                - parking_general_information.csv       # Dataset with general information
+                - parking_occupancy_history.csv         # Dataset with parking historical occupancy
             /scripts
-                - plot.py                           # Create a Bokeh Layout to be displayed with Flask
+                - plot.py                                  # Create a Bokeh Layout to be displayed with Flask
             /templates
-                - index.html                         # Flask HTML template
-            - flask_app.py                         # Flask main application
-        - Dockerfile                               # Build the "plot" Docker image
-        - README.md                                 # Documentation file for the sub-repository "plots_from_csv"
-        - requirements.txt                         # Project dependencies
+                - index.html                            # Flask HTML template
+            - flask_app.py                              # Flask main application
+        - Dockerfile                                    # Build the "plot_from_csv" Docker image
+        - README.md                                     # Documentation file for the sub-repository "plots_from_csv"
+        - requirements.txt                              # Project dependencies
 
     /realtime_plots_from_sql
-        /realtime_plotter                           # Folder dedicated to build a Bokeh Document to be displayed on a Bokeh server
+        /realtime_plotter                # Folder to create a Bokeh Document to be displayed on a Bokeh server
             /src
                 /data
-                    - parking_general_information.csv  # Dataset with general information
+                    - parking_general_information.csv   # Dataset with general information
                 /scripts
                     /config
-                        - pgsql_config.py              # Configuration files for PostgreSQL database                    
-                    - plot_realtime.py                  # Create the Bokeh Document with Bokeh Layout
-            - Dockerfile                               # Build the "plot_realtime" Docker image
-            - requirements.txt                         # Dependencies for the "plot_realtime" Docker image
+                        - pgsql_config.py               # Configuration files for PostgreSQL database                    
+                    - plot_realtime.py                  # Creates a Bokeh Document with Bokeh Layout objects
+            - Dockerfile                                # Build the "plot_realtime" Docker image
+            - requirements.txt                          # Dependencies for the "plot_realtime" Docker image
         
-        /data_collector                                # Folder dedicated to collect data on PostgreSQL database
+        /data_collector                                 # Folder to collect data on PostgreSQL database
             /src
                 /scripts
                     /config
-                        - pgsql_config.py              # Configuration files for PostgreSQL database
-                    - collect_data.py                  # Automates data fetching and populates the PostgreSQL database 
+                        - pgsql_config.py               # Configuration files for PostgreSQL database
+                    - collect_data.py                   # Automates data fetching and populates the PostgreSQL database 
             /test
                 - test_collect_data.py                  # Unit test for "collect_data.py"
-            - Dockerfile                               # Build the "collect_data" image
-            - requirements.txt                         # Dependencies for the "collect_data" Docker image
+            - Dockerfile                                # Build the "collect_data" image
+            - requirements.txt                          # Dependencies for the "collect_data" Docker image
     
-        - README.md                                    # Documentation file for the sub-repository "realtime_plots_from_sql"
+        - README.md                                     # Documentation file for the sub-repository "realtime_plots_from_sql"
 
-    - README.md                                     # This documentation file
+    - README.md                                         # This documentation file
 ```
 
 ## Getting Started

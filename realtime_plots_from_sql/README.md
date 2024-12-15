@@ -1,8 +1,8 @@
 # REALTIME PLOTS FROM SQL
 
-Welcome to the **realtime plots from sql** sub-repository!
+Welcome to the "**realtime plots from sql**" sub-repository!
 
-This project is part of the **bokeh dynamic plots** initiative, showcasing the power of **Bokeh** for creating interactive, real-time visualizations.
+This sub-repository is part of the main  "**bokeh dynamic plots**" repository, showcasing the power of **Bokeh** for creating interactive, real-time visualizations.
 
 Here, we focus on visualizing parking occupancy data from Lyon, France, sourced from an automatically updated **PostgreSQL database** and deployed using the **Bokeh server**.
 
@@ -153,7 +153,7 @@ The sub-repository is structured as follows:
         ```bash
         git clone https://github.com/RemiFigea/bokeh_dynamic_plots.git
    
-    - **Navigate to the populate_db directory:**
+    - **Navigate to the "data_collector" directory:**
 
         ```bash
         cd bokeh_dynamic_plots/realtime_plots_from_sql/data_collector
@@ -185,12 +185,12 @@ The sub-repository is structured as follows:
         "host": "IP_where_your_database_is_running"
 
 
-2. **Navigate to to the directory bokeh_server:**
+2. **Navigate to the "realtime_plotter" directory:**
    ```bash
    cd ../realtime_plotter
 
 
-3. **Congigure your PostgreSQL seesion**
+3. **Congigure your PostgreSQL session**
 
         Set your PostgreSQL password as an environement variable:
 

@@ -14,17 +14,15 @@ Dependencies:
 import ast
 from bokeh.layouts import column, row
 from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, DatetimeTickFormatter
-from bokeh.models import HTMLTemplateFormatter, HoverTool, IndexFilter,  RadioButtonGroup, TableColumn, TapTool
-from bokeh.plotting import figure, show
+from bokeh.models import HTMLTemplateFormatter, HoverTool, IndexFilter, TableColumn, TapTool
+from bokeh.plotting import figure
 from bokeh.transform import linear_cmap
-import datetime as dt
 import math
-import os
 import pandas as pd
 import xyzservices.providers as xyz
 
-PARKING_HISTORY_CSV_FILEPATH = os.path.join("../data/parking_occupancy_history.csv")
-GENERAL_INFO_CSV_FILEPATH = os.path.join("../data/parking_general_information.csv")
+PARKING_HISTORY_CSV_FILEPATH = "./data/parking_occupancy_history.csv"
+GENERAL_INFO_CSV_FILEPATH = "./data/parking_general_information.csv"
 
 PARKING_ID_HOMEPAGE = 'LPA0740'
 DATA_TABLE_COLUMNS_FILTER = [

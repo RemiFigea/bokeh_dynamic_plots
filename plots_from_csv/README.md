@@ -70,8 +70,7 @@ To run the Flask application, you only need the contents of the docker_image fol
    
 2. **Navigate to the folder dynamic_plots_from_csv_files:**
    ```bash
-   cd bokeh_dynamic_plots
-   cd plots_from_csv
+   cd bokeh_dynamic_plots/plots_from_csv
 
 3. **Run the application using Docker:**
    ```bash

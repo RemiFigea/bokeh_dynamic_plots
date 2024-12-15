@@ -51,25 +51,25 @@ https://download.data.grandlyon.com/files/rdata/lpa_mobilite.donnees/parking_tem
 The sub-repository is structured as follows:
 ```
 /realtime_plots_from_sql
-    /realtime_plotter                               # Folder dedicated to display Bokeh Figures
+    /realtime_plotter                              # Folder dedicated to display Bokeh Figures
         /src
             /data
                 - parking_general_information.csv  # Dataset with general information
             /scripts
                 /config
                     - pgsql_config.py              # Configuration files for PostgreSQL database                    
-                - plot_realtime.py                  # Create Bokeh Document to be displayed on a Bokeh server
+                - plot_realtime.py                 # Create Bokeh Document to be displayed on a Bokeh server
         - Dockerfile                               # Build the plot_realtime Docker image
         - requirements.txt                         # Dependencies for the plot_realtime Docker image
     
-    /data_collector                     # Folder dedicated to collect data on PostgreSQL database
+    /data_collector                                # Folder dedicated to collect data on PostgreSQL database
         /src
             /scripts
                 /config
                     - pgsql_config.py              # Configuration files for PostgreSQL database
-                - collect_data.py          # Automates data fetching and populates the database 
+                - collect_data.py                  # Automates data fetching and populates the database 
         /test
-            - test_collect_data.py                  # Unit test for collect_data.py
+            - test_collect_data.py                 # Unit test for collect_data.py
         - Dockerfile                               # Build the collect_data image
         - requirements.txt                         # Dependencies for the collect_data Docker image
     

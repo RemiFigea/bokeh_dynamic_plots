@@ -27,7 +27,7 @@ import shutil
 import time
 
 OUTPUT_PATH = "./tmp_json_files"
-LOGS_OUTPUT_DIR = "../logs"
+LOGS_OUTPUT_DIR = "./logs"
 LOGS_FILENAME = "collect_data.log"
 LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s" 
 LOGS_FILEPATH = os.path.join(LOGS_OUTPUT_DIR, LOGS_FILENAME)
@@ -283,7 +283,8 @@ def main():
     and writes it to a PostgreSQL database.
     Handles reconnection and environment validation.
     """
-    
+    logger.info("Main process launched!")
+
     df_state = pd.DataFrame(columns=['parking_id', "ferme", "nb_of_available_parking_spaces"])
     request_id = 1
 

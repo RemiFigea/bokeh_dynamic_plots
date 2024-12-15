@@ -73,7 +73,7 @@ file_handler = logging.FileHandler(filename=LOGS_FILEPATH, mode='w')
 file_handler.setFormatter(logging.Formatter(LOG_FORMAT))  
 logger = logging.getLogger(__name__)  
 logger.addHandler(file_handler)  
-logger.setLevel(logging.INFO)  
+logger.setLevel(logging.INFO) 
 
 class DatabaseConnectionError(Exception):
     """Custom exception for database connection errors."""
@@ -700,6 +700,8 @@ def main():
 
     global source_original, source_step_plot, source_map, source_table, df_general_info, current_parking_id
 
+    logger.info("Main process launched!")
+    
     database_connection_error_count = 0
     try:
         validate_env_password(PGSQL_CONFIG_DICT)

@@ -1,0 +1,5 @@
+#python version 3.10.12
+bokeh==3.6.2
+pandas==2.2.3
+psycopg2-binary==2.9.9
+SQLAlchemy==2.0.36

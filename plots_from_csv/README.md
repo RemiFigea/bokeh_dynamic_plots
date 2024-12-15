@@ -7,9 +7,18 @@ This sub-repository is part of the main  "**bokeh dynamic plots**" repository. T
 In this subsection, we focus on visualizing data sourced specifically from **CSV files** and use **Flask** for deployement.
 
 
+## Quick Access to the Deployed App
+
+You can find the deployed application on Hugging Face at the following address:
+https://huggingface.co/spaces/Figea/bokeh_dynamic_plots
+
+If you prefer to deploy your own instance of the application, follow the steps in the **Getting Started** section of this README.
+
+
 ## Overview
 
 This repository demonstrates how Bokeh can be used to visualize parking occupancy data in Lyon, focusing on data provided in CSV format.
+
 
 ### Data Sources
 
@@ -52,13 +61,6 @@ The sub-repository is structured as follows:
 - **`README.md`**: This documentation file.
 - **`requirements.txt`**
 ```
-
-
-## Access the Deployed App
-
-You can find the deployed application on Hugging Face at the following address:
-https://huggingface.co/spaces/Figea/bokeh_dynamic_plots
-
 
 ## Getting Started
 

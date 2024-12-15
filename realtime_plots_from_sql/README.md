@@ -38,7 +38,6 @@ We previously have created a PostgreSQL database
     - Contains general information about parking facilities in Lyon.
     - **Download link**: https://data.grandlyon.com/fr/datapusher/ws/rdata/lpa_mobilite.parking_lpa_2_0_0/all.csv?maxfeatures=-1&filename=parkings-lyon-parc-auto-metropole-lyon-v2
 
-
 2. **Parking occupancy history**:
 
     - This data is automatically populated in the PostgreSQL database by sending requests at a specify frequency to the following **API URL**:
@@ -130,7 +129,6 @@ The sub-repository is structured as follows:
 
         -- In the psql prompt
         ALTER USER you_user_name PASSWORD 'your_password'
-    
 
 3. Configure the psql_config.py file:
 
@@ -142,7 +140,6 @@ The sub-repository is structured as follows:
 
         ```bash
         ip a 
-
 
 4. Populate the Database Using Docker
 
@@ -184,11 +181,9 @@ The sub-repository is structured as follows:
         "user": "your_user_name"
         "host": "IP_where_your_database_is_running"
 
-
 2. **Navigate to the "realtime_plotter" directory:**
    ```bash
    cd ../realtime_plotter
-
 
 3. **Congigure your PostgreSQL session**
 
@@ -197,14 +192,12 @@ The sub-repository is structured as follows:
             ```bash
             export PGPASSWORD='your_password'
 
-
 3. **Build and Run the Docker Container:**
    ```bash
    docker build -t plot_realtime_image .
    docker run -e PGPASSWORD=$PGPASSWORD -p 5006:5006 plot_realtime_image
 
 **Note: If you are running the container on a virtual machine or any non-localhost environment, uncomment the appropriate line in the Dockerfile and adapt it to specify the IP address of your instance. By default, Bokeh only allows WebSocket connections from localhost:5006.**
-
 
 4. **Access the Application:**
 

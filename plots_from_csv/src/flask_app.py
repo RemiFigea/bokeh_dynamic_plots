@@ -1,6 +1,9 @@
+'''
+Main module to run the Flask application.
+'''
 from bokeh.embed import components
 from flask import Flask, render_template
-from scripts.bokeh_plot import bokeh_layout
+from scripts.plot import bokeh_general_layout
 
 
 app = Flask(__name__)
@@ -8,7 +11,7 @@ app = Flask(__name__)
 @app.route('/')
 def index():
 
-    script, div = components(bokeh_layout)
+    script, div = components(bokeh_general_layout)
     return render_template('index.html', script=script, div=div)
 
 if __name__ == "__main__":

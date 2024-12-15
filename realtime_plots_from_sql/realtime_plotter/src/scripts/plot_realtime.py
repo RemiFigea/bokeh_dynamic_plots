@@ -34,7 +34,7 @@ from sqlalchemy import create_engine
 import xyzservices.providers as xyz
 
 LOGS_OUTPUT_DIR = "./logs"
-LOGS_FILENAME = "realtime_plot.log"
+LOGS_FILENAME = "plot_realtime.log"
 LOGS_FILEPATH = os.path.join(LOGS_OUTPUT_DIR, LOGS_FILENAME)
 LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s" 
 

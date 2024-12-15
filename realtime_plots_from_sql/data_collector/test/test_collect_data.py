@@ -1,5 +1,5 @@
 """
-Unit tests for functions of module populate_db.py.
+Unit tests for functions of module collect_data.py.
 
 This script provides test cases for the `parking_state_has_changed` and 
 `collect_changes` functions, ensuring their correctness in detecting and 
@@ -9,11 +9,11 @@ updating parking state changes based on new data.
 import os
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/scripts')))
 
 import pandas as pd
-from populate_db import parking_state_has_changed, collect_changes
-import sys
+from scripts.collect_data import parking_state_has_changed, collect_changes
 import time
 import unittest
 

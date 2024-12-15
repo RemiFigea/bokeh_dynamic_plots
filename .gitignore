@@ -3,3 +3,12 @@
 __pycache__/
 */.venv/
 .venv/
+
+# Ignore temporary JSON files
+*/tmp_json_files/
+
+# Ignore log files
+*/logs/
+
+# Ignore HTML files generated in the scripts directory
+*/scripts/*.html

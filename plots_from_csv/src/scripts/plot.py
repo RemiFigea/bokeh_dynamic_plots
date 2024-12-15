@@ -1,8 +1,21 @@
+'''
+Module for creating a Bokeh Layout object to be embedded in HTML templates using Flask.
+
+This module:
+- Loads data from the specified CSV files
+- Prepares and processes the data
+- Creates Bokeh Figure and DataTable objects
+- Builds a Bokeh Layout combining these elements
+
+Dependencies:
+- CSV files located in the "data" folder
+'''
+
 import ast
 from bokeh.layouts import column, row
 from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, DatetimeTickFormatter
-from bokeh.models import HTMLTemplateFormatter, HoverTool, IndexFilter, TableColumn, TapTool
-from bokeh.plotting import figure
+from bokeh.models import HTMLTemplateFormatter, HoverTool, IndexFilter,  RadioButtonGroup, TableColumn, TapTool
+from bokeh.plotting import figure, show
 from bokeh.transform import linear_cmap
 import datetime as dt
 import math
@@ -10,9 +23,8 @@ import os
 import pandas as pd
 import xyzservices.providers as xyz
 
-DIRNAME = os.path.dirname(__file__)
-REALTIME_CSV_FILEPATH = os.path.join(DIRNAME, "../data/parking_occupancy_history.csv")
-GENERAL_INFO_CSV_FILEPATH = os.path.join(DIRNAME, "../data/parking_general_information.csv")
+PARKING_HISTORY_CSV_FILEPATH = os.path.join("../data/parking_occupancy_history.csv")
+GENERAL_INFO_CSV_FILEPATH = os.path.join("../data/parking_general_information.csv")
 
 PARKING_ID_HOMEPAGE = 'LPA0740'
 DATA_TABLE_COLUMNS_FILTER = [
@@ -222,7 +234,7 @@ def prepare_sources(df_global, initial_parking_id=PARKING_ID_HOMEPAGE, data_tabl
     """
     Prepares data sources for visualizations.
 
-    Generates ColumnDataSource objects for the global data, step plot, map, 
+    Generates ColumnDataSource objects for the global data, line plot, map, 
     and a transposed table based on the most recent values and selected parking.
 
     Parameters:
@@ -231,14 +243,14 @@ def prepare_sources(df_global, initial_parking_id=PARKING_ID_HOMEPAGE, data_tabl
     - data_table_columns_filter (list): List of columns to include in the table.
 
     Returns:
-    - tuple: Sources for global data, step plot, map, and transposed table.
+    - tuple: Sources for global data, line plot, map, and transposed table.
     """
 
     df_more_recent_value = df_global.groupby('parking_id').agg({'date': 'max'})
 
     df_map = df_global.merge(df_more_recent_value , on=['parking_id', 'date'])
 
-    df_step_plot = df_global[df_global['parking_id']==initial_parking_id]
+    df_line_plot = df_global[df_global['parking_id']==initial_parking_id]
     df_table = df_map[df_map['parking_id']==initial_parking_id]
 
     transposed_data = {
@@ -247,11 +259,11 @@ def prepare_sources(df_global, initial_parking_id=PARKING_ID_HOMEPAGE, data_tabl
     }
 
     source_original = ColumnDataSource(df_global)
-    source_step_plot = ColumnDataSource(df_step_plot)
+    source_line_plot = ColumnDataSource(df_line_plot)
     source_map = ColumnDataSource(df_map)
     source_table = ColumnDataSource(transposed_data)
 
-    return source_original, source_step_plot, source_map, source_table
+    return source_original, source_line_plot, source_map, source_table
 
 def add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOUNDS):
     """
@@ -306,7 +318,7 @@ def generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL):
         y_range=(lyon_y - zoom_level, lyon_y + zoom_level),
         x_axis_type="mercator",
         y_axis_type="mercator",
-        tools=[hover_map, 'pan', 'wheel_zoom']
+        tools=[hover_map, 'pan', 'wheel_zoom'],
         )
     p_map.add_tools(tap_tool)
     p_map.toolbar.active_tap = tap_tool
@@ -318,7 +330,7 @@ def generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL):
         source=source_map,
         size="normalized_circle_size",
         fill_color=color_mapper,
-        fill_alpha=1
+        fill_alpha=1,
         )
 
     circle_renderer.nonselection_glyph = None
@@ -326,18 +338,17 @@ def generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL):
 
     return p_map
 
-
-def generate_step_plot(source_step_plot):
+def generate_line_plot(source_line_plot):
     """
-    Creates a step plot to show the history of available parking spaces.
+    Creates a line plot to show the history of available parking spaces.
 
     Parameters:
-    - source_step_plot (ColumnDataSource): Data source for the step plot.
+    - source_line_plot (ColumnDataSource): Data source for the line plot.
 
     Returns:
-    - Figure: Bokeh step plot with hover and zoom tools.
+    - Figure: Bokeh line plot with hover and zoom tools.
     """
-    hover_step = HoverTool(
+    hover_line = HoverTool(
         tooltips = [
             ('Places disponibles', "@nombre_de_places_disponibles"),
             ('Heure', '@date{%a-%H:%M:%S}'),
@@ -345,28 +356,29 @@ def generate_step_plot(source_step_plot):
         formatters={'@date': 'datetime'},
     )
     
-    p_step = figure(
-        title=f"Historique des places disponibles", 
+    p_line = figure(
+        title=f"Historique des places disponibles - LINE PLOT", 
         height = 400,
         width = 700,
         x_axis_type="datetime",
         x_axis_label="Date", 
         y_axis_label="Nombre de places disponibles",
-        tools=[hover_step, "crosshair", "pan", "wheel_zoom"],
+        tools=[hover_line, "crosshair", "pan", "wheel_zoom"],
+        align = ('center', 'center')
     )
 
-    p_step.step(
+    p_line.line(
         "date",
         "nombre_de_places_disponibles",
-        source=source_step_plot,
+        source=source_line_plot,
         line_width=2,
-        mode="before",
         legend_field = "parking",
         )
+    
+    p_line.legend.location = "top_left"
+    p_line.xaxis.formatter = DatetimeTickFormatter(days="%d/%m/%Y")
 
-    p_step.xaxis.formatter = DatetimeTickFormatter(days="%d/%m/%Y")
-
-    return p_step
+    return p_line
 
 def generate_data_table(source_table):
     """
@@ -388,19 +400,20 @@ def generate_data_table(source_table):
         columns=columns_tranposed,
         editable=True,
         width=1000,
-        height=250,
+        height=200,
         index_position=None,
         header_row=False,
+        fit_columns = True,
         )
 
     return data_table
 
-def generate_data_table_url(source_step_plot):
+def generate_data_table_url(source_line_plot):
     """
     Creates a data table with clickable URLs for parking websites.
 
     Parameters:
-    - source_step_plot (ColumnDataSource): Data source for the table.
+    - source_line_plot (ColumnDataSource): Data source for the table.
 
     Returns:
     - DataTable: A Bokeh data table displaying parking website links.
@@ -415,83 +428,110 @@ def generate_data_table_url(source_step_plot):
         )
 
     data_url = DataTable(
-        source=source_step_plot,
+        source=source_line_plot,
         columns=[column],
         editable=True,
         width=600,
-        height=600,
+        height=50,
         index_position=None,
         view=cds_view
         )
     
     return data_url
 
-df_general_info = prepare_general_info_dataframe(GENERAL_INFO_CSV_FILEPATH)
-df_parking_history = pd.read_csv(REALTIME_CSV_FILEPATH, index_col='id', parse_dates=[4])
-df_global = prepare_global_dataframe(df_general_info, df_parking_history)
-source_original, source_step_plot, source_map, source_table = prepare_sources(df_global)
-add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOUNDS)
-lyon_x, lyon_y = latlon_to_webmercator(LATITUDE_LYON, LONGITUDE_LYON)
-p_map = generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL)
-p_step_plot = generate_step_plot(source_step_plot)
-data_table = generate_data_table(source_table)
-data_table_url = generate_data_table_url(source_step_plot)
-
-callback = CustomJS(
-    args=dict(s1=source_map, s2=source_step_plot, s3=source_table, s4=source_original),
-    code=
+def create_selection_callback(source_map, source_line_plot, source_table, source_original):
     """
-    var data_map = s1.data
-    var data_original = s4.data
-    var selected_index = cb_obj.indices[0]
-                                       
-    if (selected_index !== undefined) {
-        var parking_id = data_map['identifier'][selected_index]
-   
-        var step_plot_data = {};
-        for (var key in data_original) {
-            step_plot_data[key] = [];
-        }
+    Creates a CustomJS callback for updating data source based on user selection.
+    
+    Args:
+        source_map (ColumnDataSource): The source for the map data.
+        source_line_plot (ColumnDataSource): The source for the line plot data.
+        source_table (ColumnDataSource): The source for the data table.
+        source_original (ColumnDataSource): The source for the original dataset.
+    
+    Returns:
+        CustomJS: The JavaScript callback.
+    """
+    callback = CustomJS(
+        args=dict(s1=source_map, s2=source_line_plot, s3=source_table, s4=source_original),
+        code=
+        """
+        var data_map = s1.data
+        var data_original = s4.data
+        var selected_index = cb_obj.indices[0]
+                                        
+        if (selected_index !== undefined) {
+            var parking_id = data_map['identifier'][selected_index]
 
-        for (var i = 0; i < data_original['parking_id'].length; i++) {
-            if (data_original['parking_id'][i] === parking_id) {
-                for (var key in data_original) {
-                    step_plot_data[key].push(data_original[key][i]);
+            var line_plot_data = {};
+            for (var key in data_original) {
+                line_plot_data[key] = [];
+            }
+
+            for (var i = 0; i < data_original['parking_id'].length; i++) {
+                if (data_original['parking_id'][i] === parking_id) {
+                    for (var key in data_original) {
+                        line_plot_data[key].push(data_original[key][i]);
+                    }
                 }
             }
-        }
 
-        s2.data = step_plot_data
-    
-        var max_date_index = 0
-        var max_date = new Date(Math.max(...step_plot_data['date'].map(d => new Date(d))))
+            s2.data = line_plot_data
+        
+            var max_date_index = 0
+            var max_date = new Date(Math.max(...line_plot_data['date'].map(d => new Date(d))))
 
-        for (var i = 0; i < step_plot_data['date'].length; i++) {
-            if (new Date(step_plot_data['date'][i]).getTime() === max_date.getTime()) {
-                max_date_index = i;
-                break;
+            for (var i = 0; i < line_plot_data['date'].length; i++) {
+                if (new Date(line_plot_data['date'][i]).getTime() === max_date.getTime()) {
+                    max_date_index = i;
+                    break;
+                }
             }
+
+            var filter_columns = ["parking", "heure", "capacité_total", "nombre_de_places_disponibles", "nombre de niveaux", "hauteur limite (mètre)", "téléphone", "tarifs", "adresse"];
+            var table_data = {
+                "Field": [],
+                "Value": []
+            };
+
+            for (var key of filter_columns) {
+                var value = line_plot_data[key][max_date_index];
+
+                table_data["Field"].push(key);
+                table_data["Value"].push(value);
+            }
+
+            s3.data = table_data
         }
-
-        var filter_columns = ["parking", "heure", "capacité_total", "nombre_de_places_disponibles", "nombre de niveaux", "hauteur limite (mètre)", "téléphone", "tarifs", "adresse"];
-        var table_data = {
-            "Field": [],
-            "Value": []
-        };
-
-        for (var key of filter_columns) {
-            var value = step_plot_data[key][max_date_index];
-
-            table_data["Field"].push(key);
-            table_data["Value"].push(value);
-        }
-
-        s3.data = table_data
-    }
-    """
+        """
     )
+    return callback
 
-source_map.selected.js_on_change('indices', callback)
+def main():
+    """
+    Main function:  
+    - Loads and processes data from CSV files.  
+    - Prepares data sources for Bokeh visualizations.  
+    - Creates interactive map, line plot, and data table components.  
+    - Builds and returns a cohesive Bokeh layout.
+    """
+    df_general_info = prepare_general_info_dataframe(GENERAL_INFO_CSV_FILEPATH)
+    df_parking_history = pd.read_csv(PARKING_HISTORY_CSV_FILEPATH, index_col='id', parse_dates=[4])
+    df_global = prepare_global_dataframe(df_general_info, df_parking_history)
+    source_original, source_line_plot, source_map, source_table = prepare_sources(df_global)
+    add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOUNDS)
+    lyon_x, lyon_y = latlon_to_webmercator(LATITUDE_LYON, LONGITUDE_LYON)
+    p_map = generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL)
+    p_line_plot = generate_line_plot(source_line_plot)
+    data_table = generate_data_table(source_table)
+    data_table_url = generate_data_table_url(source_line_plot)
+    callback = create_selection_callback(source_map, source_line_plot, source_table, source_original)
+    source_map.selected.js_on_change('indices', callback)
 
-first_row = row([p_map, p_step_plot])
-bokeh_layout = column([first_row, data_table, data_table_url])
+    first_row_layout = row([p_map, p_line_plot])
+    bokeh_general_layout = column([first_row_layout, data_table, data_table_url])
+    return bokeh_general_layout
+
+bokeh_general_layout = main()
+
+

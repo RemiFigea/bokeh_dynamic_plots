@@ -1,6 +1,6 @@
 """
 Module for fetching parking data, processing changes, and storing it in a PostgreSQL database.
-Logs are store in the filepath  "../logs/populate_db.log"
+Logs are store in the specified filepath.
 
 This module:
 - Fetches parking data from an API.
@@ -9,17 +9,14 @@ This module:
 - Writes updates to a PostgreSQL database table.
 
 Dependencies:
-- PostgreSQL server and connection details
-- Environment variables for PGPASSWORD
+- An existing PostgreSQL server with an specific database and table initialized.
+- Module pgqsl_config.py specifying connection details to the PostgreSQL database.
 
 Environment Variables:
 - Ensure PGPASSWORD is set to connect to the database.
-
-Main Function:
-- The 'main' function sets up the database connection,
-  initializes the state, and continuously fetches and updates parking data.
 """
 
+from config.pgsql_config import PGSQL_CONFIG_DICT
 import json
 import logging
 import os
@@ -29,38 +26,44 @@ import requests
 import shutil
 import time
 
-API_URL = "https://download.data.grandlyon.com/files/rdata/lpa_mobilite.donnees/parking_temps_reel.json"
 OUTPUT_PATH = "./tmp_json_files"
 LOGS_OUTPUT_DIR = "../logs"
-LOGS_FILENAME = "populate_db.log"
-LOGS_FILEPATH = os.path.join(LOGS_OUTPUT_DIR, LOGS_FILENAME )
+LOGS_FILENAME = "collect_data.log"
+LOG_FORMAT = "%(levelname)s %(asctime)s - %(message)s" 
+LOGS_FILEPATH = os.path.join(LOGS_OUTPUT_DIR, LOGS_FILENAME)
+API_URL = "https://download.data.grandlyon.com/files/rdata/lpa_mobilite.donnees/parking_temps_reel.json"
+
 REQUEST_FREQUENCY = 60
 REQUIRED_COLUMNS_SET = {"mv:currentValue", "ferme", "Parking_schema:identifier", "dct:date"}
 
-PGPASSWORD = os.environ.get('PGPASSWORD')
-PGSQL_CONFIG_DICT = {
-    "user": "postgres",
-    "host": "127.0.1",
-    #"host": "172.31.4.218", 
-    "port": "5432",   
-    "password": PGPASSWORD,
-    "database": "parking_lyon_db",
-    "table": "parking_table"
-}
-
 os.makedirs(LOGS_OUTPUT_DIR, exist_ok=True)
-logging.basicConfig(filename=LOGS_FILEPATH, level=logging.INFO)
+
+file_handler = logging.FileHandler(filename=LOGS_FILEPATH, mode='w')  
+file_handler.setFormatter(logging.Formatter(LOG_FORMAT))  
+logger = logging.getLogger(__name__)  
+logger.addHandler(file_handler)  
+logger.setLevel(logging.INFO) 
 
 class CriticalDataFrameError(Exception):
     """Custom exception for critical DataFrame validation errors."""
 
-def get_current_time():
+def validate_env_password(pgsql_config_dict):
     """
-    Returns the current time as a formatted string.
+    Validates that the PostgreSQL password is set in the environment configuration.
+
+    Parameters:
+    - config_dict (dict): Dictionary containing environment configuration keys and values.
+
+    Raises:
+    - EnvironmentError: If the 'password' key is not set in the configuration dictionary.
     """
-    localtime = time.localtime()
-    current_time = f"{localtime.tm_hour}h:{localtime.tm_min}min:{localtime.tm_sec}s"
-    return current_time
+    if not pgsql_config_dict.get('password'):
+        error_msg = (
+            f"PGPASSWORD environment variable not set.\n"
+            "Set it using the command: export PGPASSWORD='your_password_here'"
+        )
+        logger.critical(error_msg, exc_info=True)
+        raise EnvironmentError(error_msg)
 
 def fetch_data_and_save(request_id, api_url, output_path):
     """
@@ -80,24 +83,18 @@ def fetch_data_and_save(request_id, api_url, output_path):
         tmp_json_filepath = os.path.join(output_path, tmp_json_filename)
 
         response = requests.get(api_url)
-   
-        current_time = get_current_time()
-        logging.info(f"Request_id: {request_id}")
-        logging.info(f"Time: {current_time} - status_code request of API: {response.status_code}.")
 
         if response.status_code == 200:
             data = response.json()
 
             with open(tmp_json_filepath, "w") as f:
                 json.dump(data, f)
-                current_time = get_current_time()
-                logging.info(f"Time: {current_time} - temporary json_file created.")
         else:
-            logging.info(f"HTTP Error: {response.status_code}")
+            logger.info(f"HTTP Error: {response.status_code}")
+
     except Exception:
-        current_time = get_current_time()
-        error_msg = f"Time: {current_time} - Error fetching data."
-        logging.error(error_msg)
+        error_msg = "Error fetching data."
+        logger.error(error_msg)
         raise
 
 def get_postgresql_connection(pgsql_config_dict):
@@ -119,11 +116,11 @@ def get_postgresql_connection(pgsql_config_dict):
                 host=pgsql_config_dict.get('host'),
                 port=pgsql_config_dict.get('port')
             )
+
         cursor = conn.cursor()
     except Exception:
-        current_time = get_current_time()
-        error_msg = f"Time: {current_time} - Error connecting to PostgreSQL database."
-        logging.error(error_msg)
+        error_msg = "Error connecting to PostgreSQL database."
+        logger.error(error_msg)
         raise
     
     return conn, cursor
@@ -148,9 +145,8 @@ def load_new_json(output_path, request_id):
             batch_df = pd.DataFrame(tmp_json_file)
 
     except Exception:
-        current_time = get_current_time()
-        error_msg = f"Time: {current_time} - Error loading {tmp_json_filename}."
-        logging.error(error_msg)
+        error_msg = f"Error loading {tmp_json_filename}."
+        logger.error(error_msg)
         raise
 
     return batch_df
@@ -167,9 +163,8 @@ def rename_columns(batch_df, required_columns_set):
     pd.DataFrame: DataFrame with renamed columns according to the mapping.
     """
     if not required_columns_set.issubset(batch_df.columns):
-        current_time = get_current_time()
-        error_msg = f"Time: {current_time} - JSON does not contain expected columns."
-        logging.error(error_msg)
+        error_msg = "JSON does not contain expected columns."
+        logger.error(error_msg)
         raise ValueError()
     
     columns_renamer = {
@@ -240,9 +235,8 @@ def validate_df_state_length(df_state):
     """
     df_state_length = len(df_state)
     if df_state_length > 30:
-        current_time = get_current_time()
-        error_msg = f"Time: {current_time} - df_state length shouldn't be over 30, current length: {df_state_length}."
-        logging.critical(error_msg)
+        error_msg = f"df_state length shouldn't be over 30, current length: {df_state_length}."
+        logger.critical(error_msg)
         raise  CriticalDataFrameError()
 
 def write_to_postgresql(conn, cursor, changes_list, table_name):
@@ -275,14 +269,10 @@ def write_to_postgresql(conn, cursor, changes_list, table_name):
 
         conn.commit()
         
-        current_time = get_current_time()
-        logging.info(f"Time: {current_time} - Data written in PostgreSQL database.")
-        
     except Exception as e:
         conn.rollback()
-        current_time = get_current_time()
-        error_msg = f"Time: {current_time} - Error inserting into PostgreSQL: {str(e)}"
-        logging.error(error_msg)
+        error_msg = f"Error inserting into PostgreSQL: {str(e)}"
+        logger.error(error_msg)
         raise
     
 def main():
@@ -296,14 +286,8 @@ def main():
     
     df_state = pd.DataFrame(columns=['parking_id', "ferme", "nb_of_available_parking_spaces"])
     request_id = 1
-    
-    if not PGPASSWORD:
-        error_msg = (
-            "PGPASSWORD environment variable not set.\n"
-            "Set it using the command: export PGPASSWORD='your_password_here'"
-        )
-        logging.critical(error_msg, exc_info=True)
-        raise EnvironmentError(error_msg)
+
+    validate_env_password(PGSQL_CONFIG_DICT)
 
     try:
         conn, cursor = get_postgresql_connection(PGSQL_CONFIG_DICT)
@@ -322,16 +306,16 @@ def main():
                 request_id += 1
 
             except CriticalDataFrameError as e:
-                logging.error(f"Critical Error!", exc_info=True)
-                logging.info("Exiting the main loop due to DataFrame validation failure.")
+                logger.error(f"Critical Error!", exc_info=True)
+                logger.info("Exiting the main loop due to DataFrame validation failure.")
                 break
             except Exception as e:
-                logging.error("Unexpected error in main loop!", exc_info=True)
+                logger.error("Unexpected error in main loop!", exc_info=True)
                 time.sleep(60)
     finally:
         if conn:
             conn.close()
-            logging.info("PostgreSQL connection closed.")
+            logger.info("PostgreSQL connection closed.")
 
 if __name__ == "__main__":
     main()

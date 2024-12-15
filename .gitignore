@@ -9,6 +9,7 @@ __pycache__/
 
 # Ignore log files
 */logs/
+logs/
 
 # Ignore HTML files generated in the scripts directory
 */scripts/*.html

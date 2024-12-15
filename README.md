@@ -8,13 +8,13 @@ This repository demonstrates how Bokeh can be used to visualize parking occupanc
 
 1. "**plots_from_csv**":
 
-    - Focus: Visualizing data sourced from **CSV files**
+    - Focus: Visualizing data sourced from a static **CSV file** containing pre-existing parking occupancy data.
 
     - Deployment: Uses **Flask**
 
 2. "**realtime_plots_from_sql**":
 
-    - Focus: Visualizing **real-time data** sourced from a **PostgreSQL Database**
+    - Focus: Visualizing **real-time data** sourced from a **PostgreSQL Database** automatically updated with real-time parking occupancy data.
 
     - Deployment: Utilizes the **Bokeh server**
 

@@ -20,8 +20,8 @@ Environment Variables:
 
 import ast
 from bokeh.layouts import column, row
-from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, Div, DatetimeTickFormatter
-from bokeh.models import HTMLTemplateFormatter, HoverTool, IndexFilter, TableColumn, TapTool
+from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, Div, DatetimeTickFormatter, HTMLTemplateFormatter
+from bokeh.models import HoverTool, IndexFilter, RadioButtonGroup, TableColumn, TapTool
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import linear_cmap
 from config.pgsql_config import PGSQL_CONFIG_DICT
@@ -64,6 +64,9 @@ source_original = ColumnDataSource()
 source_step_plot = ColumnDataSource()
 source_map = ColumnDataSource()
 source_table = ColumnDataSource()
+history_plot = None
+p_step = None
+p_line = None
 df_general_info = pd.DataFrame()
 current_parking_id = PARKING_ID_HOMEPAGE
 
@@ -450,7 +453,7 @@ def generate_step_plot(source_step_plot):
 
     Returns:
     - Figure: Bokeh step plot with hover and zoom tools.
-    """    
+    """
     p_step = figure(
         title=f"Historique des places disponibles - STEP PLOT", 
         height = 400,
@@ -553,8 +556,8 @@ def generate_data_table_url(source_step_plot):
     Returns:
     - DataTable: A Bokeh data table displaying parking website links.
     """
-    cds_view = CDSView()
-    cds_view.filter = IndexFilter([0])
+    url_cds_view = CDSView()
+    url_cds_view.filter = IndexFilter([0])
 
     column = TableColumn(
         field="site_web",
@@ -569,10 +572,20 @@ def generate_data_table_url(source_step_plot):
         width=600,
         height=600,
         index_position=None,
-        view=cds_view
+        view=url_cds_view
         )
     
     return data_url
+
+def switch_plot(attr, old, new):
+    global history_plot, p_step, p_line
+    selected_plot = new
+    history_plot.children.pop()
+
+    if selected_plot == 0:
+        history_plot.children.append(p_step)
+    elif selected_plot == 1:
+        history_plot.children.append(p_line)
 
 def create_selection_callback(source_map, source_step_plot, source_table, source_original):
     """
@@ -698,7 +711,7 @@ def main():
     Errors are logged, with up to five retries for database connection issues before stopping execution.
     """
 
-    global source_original, source_step_plot, source_map, source_table, df_general_info, current_parking_id
+    global source_original, source_step_plot, source_map, source_table, df_general_info, current_parking_id, history_plot, p_step, p_line
 
     logger.info("Main process launched!")
     
@@ -720,6 +733,7 @@ def main():
         lyon_x, lyon_y = latlon_to_webmercator(LATITUDE_LYON, LONGITUDE_LYON)
         p_map = generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL)
         p_step = generate_step_plot(source_step_plot)
+        p_line = generate_line_plot(source_step_plot)
         data_table = generate_data_table(source_table)
         data_table_url = generate_data_table_url(source_step_plot)
 
@@ -727,11 +741,24 @@ def main():
         source_map.selected.on_change('indices', get_current_parking_id)
         source_map.selected.js_on_change('indices', callback)
 
-        title = Div(text='<h1 style="text-align:center; color:black;font-size: 48px;">Analyse en temps réel de l\'occupation de parkings à Lyon</h1>')
-        first_row = row([p_map, p_step])
-        bokeh_layout = column([title, first_row, data_table, data_table_url])
+        button_group = RadioButtonGroup(labels=["STEP PLOT", "LINE PLOT"], active=0)
+        button_group.on_change("active", switch_plot)
 
-        curdoc().add_root(bokeh_layout)
+        update_delay_minute = UPDATE_FREQUENCY // 60000
+        title = Div(text=f'''
+                    <h1 style="text-align:center; color:black; font-size: 48px; margin-bottom: 5px;">
+                        Analyse en temps réel de l'occupation des parkings à Lyon
+                    </h1>
+                    <p style="text-align:center; color:black; font-size: 24px; margin-top: 0; padding-top: 0;">
+                        (mise à jour toutes les {update_delay_minute} minutes)
+                    </p>
+                ''')
+        history_plot = column(p_step)
+        right_corner = column([history_plot, button_group])
+        first_row = row([p_map, right_corner])
+        bokeh_general_layout = column([title, first_row, data_table, data_table_url])
+
+        curdoc().add_root(bokeh_general_layout)  
         curdoc().add_periodic_callback(update_sources, UPDATE_FREQUENCY)
 
     except DatabaseConnectionError as e:

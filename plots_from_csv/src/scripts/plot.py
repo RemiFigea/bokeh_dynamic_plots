@@ -437,30 +437,37 @@ def generate_data_table_url(source_line_plot):
     
     return data_url
 
-def create_selection_callback(source_map, source_line_plot, source_table, source_original):
+def create_selection_callback(source_map, source_line_plot, source_table, source_original, p_line):
     """
     Creates a CustomJS callback for updating data source based on user selection.
     
-    Args:
-        source_map (ColumnDataSource): The source for the map data.
-        source_line_plot (ColumnDataSource): The source for the line plot data.
-        source_table (ColumnDataSource): The source for the data table.
-        source_original (ColumnDataSource): The source for the original dataset.
+    Parameters:
+    - source_map (ColumnDataSource): The source for the map data.
+    - source_line_plot (ColumnDataSource): The source for the line plot data.
+    - source_table (ColumnDataSource): The source for the data table.
+    - source_original (ColumnDataSource): The source for the original dataset.
+    - p_line (Figure): Bokeh step plot.
     
     Returns:
-        CustomJS: The JavaScript callback.
+    - CustomJS: The JavaScript callback.
     """
     callback = CustomJS(
-        args=dict(s1=source_map, s2=source_line_plot, s3=source_table, s4=source_original),
+        args=dict(
+            s_map=source_map,
+            s_line=source_line_plot,
+            s_table=source_table,
+            s_original=source_original,
+            p_line=p_line),
         code=
         """
-        var data_map = s1.data
-        var data_original = s4.data
+        var data_map = s_map.data
+        var data_original = s_original.data
         var selected_index = cb_obj.indices[0]
                                         
         if (selected_index !== undefined) {
             var parking_id = data_map['identifier'][selected_index]
 
+            // Update s_line
             var line_plot_data = {};
             for (var key in data_original) {
                 line_plot_data[key] = [];
@@ -474,8 +481,23 @@ def create_selection_callback(source_map, source_line_plot, source_table, source
                 }
             }
 
-            s2.data = line_plot_data
-        
+            s_line.data = line_plot_data
+            s_line.change.emit()
+
+            // Specify new axis range for the history plots 
+            var x_min = Math.min(...line_plot_data['date'].map(d => new Date(d).getTime()));
+            var x_max = Math.max(...line_plot_data['date'].map(d => new Date(d).getTime()));
+            var y_min = Math.min(...line_plot_data['nombre_de_places_disponibles']);
+            var y_max = Math.max(...line_plot_data['nombre_de_places_disponibles']);
+
+            var x_padding = 0.1 * (x_max - x_min);
+            var y_padding = 0.1 * (y_max - y_min);
+
+            p_line.x_range.setv({ start: x_min - x_padding, end: x_max + x_padding });
+            p_line.y_range.setv({ start: y_min - y_padding, end: y_max + y_padding });
+            p_line.change.emit();
+
+            // Update s_table
             var max_date_index = 0
             var max_date = new Date(Math.max(...line_plot_data['date'].map(d => new Date(d))))
 
@@ -499,7 +521,7 @@ def create_selection_callback(source_map, source_line_plot, source_table, source
                 table_data["Value"].push(value);
             }
 
-            s3.data = table_data
+            s_table.data = table_data
         }
         """
     )
@@ -520,13 +542,16 @@ def main():
     add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOUNDS)
     lyon_x, lyon_y = latlon_to_webmercator(LATITUDE_LYON, LONGITUDE_LYON)
     p_map = generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL)
-    p_line_plot = generate_line_plot(source_line_plot)
+    p_line = generate_line_plot(source_line_plot)
     data_table = generate_data_table(source_table)
     data_table_url = generate_data_table_url(source_line_plot)
-    callback = create_selection_callback(source_map, source_line_plot, source_table, source_original)
+    callback = create_selection_callback(source_map, source_line_plot,
+                                         source_table,
+                                         source_original,
+                                         p_line)
     source_map.selected.js_on_change('indices', callback)
 
-    first_row_layout = row([p_map, p_line_plot])
+    first_row_layout = row([p_map, p_line])
     bokeh_general_layout = column([first_row_layout, data_table, data_table_url])
     return bokeh_general_layout
 

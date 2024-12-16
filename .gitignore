@@ -13,3 +13,6 @@ logs/
 
 # Ignore HTML files generated in the scripts directory
 */scripts/*.html
+
+# Ignore fichier de config
+*/config/*

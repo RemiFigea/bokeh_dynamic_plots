@@ -12,15 +12,26 @@ This repository demonstrates how Bokeh can be used to visualize parking occupanc
 
     - Deployment: Uses **Flask**
 
+    - Access: Application is deployed on Hugging Face at the following address:
+
+    https://huggingface.co/spaces/Figea/bokeh_dynamic_plots
+
+
 2. "**realtime_plots_from_sql**":
 
     - Focus: Visualizing **real-time data** sourced from a **PostgreSQL Database** automatically updated with real-time parking occupancy data.
 
     - Deployment: Utilizes the **Bokeh server**
 
+    - Access: Application is running on AWS EC2 instance connected to a AWS RDS instance at the following address:
+
+    http://35.181.43.132:5006/plot_realtime
+
+
 ### Data Sources
 
 All data are sourced from the following website: https://data.grandlyon.com
+
 
 ## Repository Structure
 
@@ -67,6 +78,7 @@ The repository is structured as follows:
     - README.md                                         # This documentation file
 ```
 
+
 ## Getting Started
 
 Each sub-repository contains its own README.md with specific instructions tailored to:
@@ -81,6 +93,7 @@ Each sub-repository contains its own README.md with specific instructions tailor
 
 Make sure to follow the appropriate README.md located in the corresponding subdirectory.
    
+
 ## Contributing
 
 Feel free to contribute to the projects by opening issues or submitting pull requests. If you have suggestions or improvements, I welcome your feedback!

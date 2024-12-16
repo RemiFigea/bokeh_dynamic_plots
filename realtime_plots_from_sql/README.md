@@ -10,7 +10,7 @@ Here, we focus on visualizing parking occupancy data from Lyon, France, sourced 
 ## Quick Access to the Deployed App
 
 You can find the project deployed at the following address:
-http://35.181.43.132:5006/bokeh_server
+http://35.181.43.132:5006/plot_realtime
 
 If you prefer to deploy your own instance of the application, follow the steps in the **Getting Started** section of this README.
 

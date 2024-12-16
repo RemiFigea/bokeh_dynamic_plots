@@ -57,7 +57,7 @@ LATITUDE_LYON = 45.764043
 LONGITUDE_LYON = 4.835659
 CIRCLE_SIZE_BOUNDS = (10, 25)
 ZOOM_LEVEL = 10000
-UPDATE_FREQUENCY = 60000 #1 minute
+UPDATE_FREQUENCY = 600000 #10 minute
 
 source_original = ColumnDataSource()
 source_map = ColumnDataSource()
@@ -624,7 +624,7 @@ def switch_plot(attr, old, new):
     selected_plot = new
 
     if selected_plot == 0:
-        p_step.visible, p_line.visible = True, False
+        p_line.visible, p_step.visible  = False, True
         
     elif selected_plot == 1:
         p_step.visible, p_line.visible = False, True

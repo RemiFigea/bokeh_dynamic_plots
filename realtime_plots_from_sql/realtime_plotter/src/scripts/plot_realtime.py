@@ -17,20 +17,20 @@ Dependencies:
 Environment Variables:
 - Ensure PGPASSWORD is set to connect to the database.
 '''
-
 import ast
 from bokeh.layouts import column, row
 from bokeh.models import CDSView, ColumnDataSource, CustomJS, DataTable, Div, DatetimeTickFormatter, HTMLTemplateFormatter
-from bokeh.models import HoverTool, IndexFilter, RadioButtonGroup, TableColumn, TapTool
+from bokeh.models import HoverTool, IndexFilter, RadioButtonGroup, Range1d, TableColumn, TapTool
 from bokeh.plotting import curdoc, figure
 from bokeh.transform import linear_cmap
 from config.pgsql_config import PGSQL_CONFIG_DICT
 import logging
 import math
+import numpy as np
 import os
-import time
 import pandas as pd
 from sqlalchemy import create_engine
+import time
 import xyzservices.providers as xyz
 
 LOGS_OUTPUT_DIR = "./logs"
@@ -59,14 +59,12 @@ CIRCLE_SIZE_BOUNDS = (10, 25)
 ZOOM_LEVEL = 10000
 UPDATE_FREQUENCY = 60000 #1 minute
 
-current_parking_id = PARKING_ID_HOMEPAGE
 source_original = ColumnDataSource()
-source_step_plot = ColumnDataSource()
 source_map = ColumnDataSource()
+source_history_plot = ColumnDataSource()
 source_table = ColumnDataSource()
-history_plot = None
-p_step = None
-p_line = None
+p_step = figure()
+p_line = figure()
 df_general_info = pd.DataFrame()
 current_parking_id = PARKING_ID_HOMEPAGE
 
@@ -334,6 +332,7 @@ def prepare_global_dataframe(df_general_info, df_realtime):
         },
     inplace=True
     )
+    df_global.dropna(subset=['date', 'nombre_de_places_disponibles'], inplace=True)
     df_global.sort_values('date', inplace=True)
 
     return df_global
@@ -357,7 +356,7 @@ def initialize_sources(df_global, initial_parking_id=PARKING_ID_HOMEPAGE, data_t
 
     df_map = df_global.merge(df_more_recent_value , on=['parking_id', 'date'])
 
-    df_step_plot = df_global[df_global['parking_id']==initial_parking_id]
+    df_history_plot = df_global[df_global['parking_id']==initial_parking_id]
     df_table = df_map[df_map['parking_id']==initial_parking_id]
 
     transposed_data = {
@@ -366,11 +365,11 @@ def initialize_sources(df_global, initial_parking_id=PARKING_ID_HOMEPAGE, data_t
     }
 
     source_original = ColumnDataSource(df_global)
-    source_step_plot = ColumnDataSource(df_step_plot)
+    source_history_plot = ColumnDataSource(df_history_plot)
     source_map = ColumnDataSource(df_map)
     source_table = ColumnDataSource(transposed_data)
 
-    return source_original, source_step_plot, source_map, source_table
+    return source_original, source_map, source_history_plot, source_table
 
 def add_circle_size_to_source_map(source_map, circle_size_bounds=CIRCLE_SIZE_BOUNDS):
     """
@@ -444,15 +443,55 @@ def generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL):
 
     return p_map
 
-def generate_step_plot(source_step_plot):
+def get_axis_range(source_history_plot):
+    """
+    Computes padded axis ranges for a Bokeh plot based on a `ColumnDataSource`.
+
+    Parameters:
+    - source_history_plot (ColumnDataSource): Contains 'date' (x-axis) and 
+      'nombre_de_places_disponibles' (y-axis) data.
+
+    Returns:
+    - tuple: Two `Range1d` objects for the x and y axis ranges.
+
+    Notes:
+    - Handles NaN values and converts 'date' to timestamps if needed.
+    - Adds 10% padding to both axes for better visualization.
+    """
+
+    x_dates = source_history_plot.data['date']
+    y_values = source_history_plot.data['nombre_de_places_disponibles']
+       
+    if isinstance(x_dates[0], str):
+        x_dates = pd.to_datetime(x_dates).astype(int)
+
+    x_min = np.nanmin(x_dates)
+    x_max = np.nanmax(x_dates)
+    y_min = np.nanmin(y_values)
+    y_max = np.nanmax(y_values)
+ 
+    x_pad = 0.1 * (x_max - x_min)
+    y_pad = 0.1 * (y_max - y_min)
+
+    x_start = x_min - x_pad
+    x_end = x_max + x_pad
+    y_start  = y_min - y_pad
+    y_end  = y_max + y_pad
+
+    x_range = Range1d(start=x_start, end=x_end)
+    y_range = Range1d(start=y_start, end=y_end)
+
+    return x_range, y_range
+
+def generate_step_plot(source_history_plot):
     """
     Creates a step plot to show the history of available parking spaces.
 
     Parameters:
-    - source_step_plot (ColumnDataSource): Data source for the step plot.
+    - source_history_plot (ColumnDataSource): Data source for the step plot.
 
     Returns:
-    - Figure: Bokeh step plot with hover and zoom tools.
+    - Figure: Bokeh step plot.
     """
     p_step = figure(
         title=f"Historique des places disponibles - STEP PLOT", 
@@ -462,31 +501,33 @@ def generate_step_plot(source_step_plot):
         x_axis_label="Date", 
         y_axis_label="Nombre de places disponibles",
         tools=["crosshair", "pan", "wheel_zoom"],
+        name="step_plot"
     )
 
     p_step.step(
         "date",
         "nombre_de_places_disponibles",
-        source=source_step_plot,
+        source=source_history_plot,
         line_width=2,
         mode="before",
         legend_field = "parking",
         )
     
+    p_step.x_range, p_step.y_range = get_axis_range(source_history_plot)
     p_step.legend.location = "top_left"
     p_step.xaxis.formatter = DatetimeTickFormatter(days="%d/%m/%Y")
 
     return p_step
 
-def generate_line_plot(source_step_plot):
+def generate_line_plot(source_history_plot):
     """
     Creates a line plot to show the history of available parking spaces.
 
     Parameters:
-    - source_line_plot (ColumnDataSource): Data source for the line plot.
+    - source_history_plot (ColumnDataSource): Data source for the line plot.
 
     Returns:
-    - Figure: Bokeh line plot with hover and zoom tools.
+    - Figure: Bokeh line plot.
     """
     hover_line = HoverTool(
         tooltips = [
@@ -504,16 +545,18 @@ def generate_line_plot(source_step_plot):
         x_axis_label="Date", 
         y_axis_label="Nombre de places disponibles",
         tools=[hover_line, "crosshair", "pan", "wheel_zoom"],
+        name="line_plot"
     )
 
     p_line.line(
         "date",
         "nombre_de_places_disponibles",
-        source=source_step_plot,
+        source=source_history_plot,
         line_width=2,
         legend_field = "parking",
         )
-    
+
+    p_line.x_range, p_line.y_range = get_axis_range(source_history_plot)
     p_line.legend.location = "top_left"
     p_line.xaxis.formatter = DatetimeTickFormatter(days="%d/%m/%Y")
 
@@ -537,7 +580,7 @@ def generate_data_table(source_table):
     data_table = DataTable(
         source=source_table,
         columns=columns_tranposed,
-        editable=True,
+        reorderable =False,
         width=1000,
         height=250,
         index_position=None,
@@ -546,7 +589,7 @@ def generate_data_table(source_table):
 
     return data_table
 
-def generate_data_table_url(source_step_plot):
+def generate_data_table_url(source_history_plot):
     """
     Creates a data table with clickable URLs for parking websites.
 
@@ -566,9 +609,9 @@ def generate_data_table_url(source_step_plot):
         )
 
     data_url = DataTable(
-        source=source_step_plot,
+        source=source_history_plot,
         columns=[column],
-        editable=True,
+        reorderable =False,
         width=600,
         height=600,
         index_position=None,
@@ -578,59 +621,85 @@ def generate_data_table_url(source_step_plot):
     return data_url
 
 def switch_plot(attr, old, new):
-    global history_plot, p_step, p_line
     selected_plot = new
-    history_plot.children.pop()
 
     if selected_plot == 0:
-        history_plot.children.append(p_step)
+        p_step.visible, p_line.visible = True, False
+        
     elif selected_plot == 1:
-        history_plot.children.append(p_line)
+        p_step.visible, p_line.visible = False, True
 
-def create_selection_callback(source_map, source_step_plot, source_table, source_original):
+def create_selection_callback(source_original, source_map, source_history_plot, source_table, p_step, p_line):
     """
     Creates a CustomJS callback for updating data source based on user selection.
     
-    Args:
-        source_map (ColumnDataSource): The source for the map data.
-        source_step_plot (ColumnDataSource): The source for the step plot data.
-        source_table (ColumnDataSource): The source for the data table.
-        source_original (ColumnDataSource): The source for the original dataset.
+    Parameters:
+    - source_original (ColumnDataSource): The source for the original dataset.
+    - source_map (ColumnDataSource): The source for the map data.
+    - source_history_plot (ColumnDataSource): The source for the step plot, line plot and url_table data.
+    - source_table (ColumnDataSource): The source for the data table.
+    - p_step (Figure): Bokeh step plot.
+    - p_line (Figure): Bokeh step plot.
     
     Returns:
         CustomJS: The JavaScript callback.
     """
     callback = CustomJS(
-        args=dict(s1=source_map, s2=source_step_plot, s3=source_table, s4=source_original),
+        args=dict(
+            s_map=source_map,
+            s_history=source_history_plot,
+            s_table=source_table,
+            s_original=source_original,
+            p_step=p_step,
+            p_line=p_line),
         code=
         """
-        var data_map = s1.data
-        var data_original = s4.data
+        var map_data = s_map.data
+        var original_data = s_original.data
         var selected_index = cb_obj.indices[0]
                                         
         if (selected_index !== undefined) {
-            var parking_id = data_map['identifier'][selected_index]
-    
-            var step_plot_data = {};
-            for (var key in data_original) {
-                step_plot_data[key] = [];
+            var parking_id = map_data['identifier'][selected_index]
+
+            // Update s_history
+            var history_data = {};
+            for (var key in original_data) {
+                history_data[key] = [];
             }
 
-            for (var i = 0; i < data_original['parking_id'].length; i++) {
-                if (data_original['parking_id'][i] === parking_id) {
-                    for (var key in data_original) {
-                        step_plot_data[key].push(data_original[key][i]);
+            for (var i = 0; i < original_data['parking_id'].length; i++) {
+                if (original_data['parking_id'][i] === parking_id) {
+                    for (var key in original_data) {
+                        history_data[key].push(original_data[key][i]);
                     }
                 }
             }
 
-            s2.data = step_plot_data
-        
-            var max_date_index = 0
-            var max_date = new Date(Math.max(...step_plot_data['date'].map(d => new Date(d))))
+            s_history.data = history_data
+            s_history.change.emit()
 
-            for (var i = 0; i < step_plot_data['date'].length; i++) {
-                if (new Date(step_plot_data['date'][i]).getTime() === max_date.getTime()) {
+            // Specify new axis range for the history plots 
+            var x_min = Math.min(...history_data['date'].map(d => new Date(d).getTime()));
+            var x_max = Math.max(...history_data['date'].map(d => new Date(d).getTime()));
+            var y_min = Math.min(...history_data['nombre_de_places_disponibles']);
+            var y_max = Math.max(...history_data['nombre_de_places_disponibles']);
+
+            var x_padding = 0.1 * (x_max - x_min);
+            var y_padding = 0.1 * (y_max - y_min);
+
+            p_step.x_range.setv({ start: x_min - x_padding, end: x_max + x_padding });
+            p_step.y_range.setv({ start: y_min - y_padding, end: y_max + y_padding });
+            p_line.x_range.setv({ start: x_min - x_padding, end: x_max + x_padding });
+            p_line.y_range.setv({ start: y_min - y_padding, end: y_max + y_padding });
+            p_step.change.emit();
+            p_line.change.emit();
+            
+            // Update s_table
+            var max_date_index = 0
+            var max_date = new Date(Math.max(...history_data['date'].map(d => new Date(d))))
+
+            for (var i = 0; i < history_data['date'].length; i++) {
+                if (new Date(history_data['date'][i]).getTime() === max_date.getTime()) {
                     max_date_index = i;
                     break;
                 }
@@ -643,13 +712,13 @@ def create_selection_callback(source_map, source_step_plot, source_table, source
             };
 
             for (var key of filter_columns) {
-                var value = step_plot_data[key][max_date_index];
+                var value =history_data[key][max_date_index];
 
                 table_data["Field"].push(key);
                 table_data["Value"].push(value);
             }
 
-            s3.data = table_data
+            s_table.data = table_data
         }
         """
         )
@@ -680,15 +749,13 @@ def update_sources():
     Returns:
     - None: Updates global sources in place for Bokeh visualization.
     """
-    global source_original, source_step_plot, source_map, source_table, df_general_info, current_parking_id
-
     df_realtime = get_realtime_dataframe(PGSQL_CONFIG_DICT)
     df_global = prepare_global_dataframe(df_general_info, df_realtime)
-    df_step_plot = df_global[df_global['parking_id']==current_parking_id]
+    df_history_plot = df_global[df_global['parking_id']==current_parking_id]
 
     df_more_recent_value = df_global.groupby('parking_id').agg({'date': 'max'})
     df_map = df_global.merge(df_more_recent_value , on=['parking_id', 'date'])
-    
+    df_map["normalized_circle_size"] = CIRCLE_SIZE_BOUNDS[0]
     df_table = df_map[df_map['parking_id']==current_parking_id]
 
     transposed_data = {
@@ -697,10 +764,36 @@ def update_sources():
     }
 
     source_original.data = df_global.to_dict('list')
-    source_step_plot.data = df_step_plot.to_dict('list')
     source_map.data = df_map.to_dict('list')
-    source_table.data = transposed_data
     add_circle_size_to_source_map(source_map)
+    source_history_plot.data = df_history_plot.to_dict('list')
+    source_table.data = transposed_data
+
+def get_layout_title(layout_update_frequency=UPDATE_FREQUENCY):
+    """
+    Create a styled Bokeh Div title for the layout, showing update frequency.
+
+    Parameters:
+    layout_update_frequency : int
+        Update frequency in milliseconds (default: UPDATE_FREQUENCY).
+
+    Returns:
+    -------
+    Div
+        A Bokeh Div with the layout title as HTML.
+    """
+    update_freq_minute = layout_update_frequency // 60000
+    
+    title = Div(text=f'''
+                <h1 style="text-align:center; color:black; font-size: 48px; margin-bottom: 5px;">
+                    Analyse en temps réel de l'occupation des parkings à Lyon
+                </h1>
+                <p style="text-align:center; color:black; font-size: 24px; margin-top: 0; padding-top: 0;">
+                    (mise à jour toutes les {update_freq_minute} minutes)
+                </p>
+            ''')
+    return title
+
 
 def main():
     """
@@ -710,9 +803,8 @@ def main():
     the visualizations.
     Errors are logged, with up to five retries for database connection issues before stopping execution.
     """
-
-    global source_original, source_step_plot, source_map, source_table, df_general_info, current_parking_id, history_plot, p_step, p_line
-
+    global source_original, source_history_plot, source_map, source_table, df_general_info, current_parking_id, p_step, p_line
+ 
     logger.info("Main process launched!")
     
     database_connection_error_count = 0
@@ -724,7 +816,7 @@ def main():
         validate_realtime_df_columns(df_realtime, required_columns_set=REQUIRED_COLUMNS_SET)
         df_global = prepare_global_dataframe(df_general_info, df_realtime)
 
-        source_original, source_step_plot, source_map, source_table = initialize_sources(df_global,
+        source_original, source_map, source_history_plot, source_table = initialize_sources(df_global,
                                                                                         initial_parking_id=PARKING_ID_HOMEPAGE,
                                                                                         data_table_columns_filter=DATA_TABLE_COLUMNS_FILTER
                                                                                         )
@@ -732,28 +824,31 @@ def main():
 
         lyon_x, lyon_y = latlon_to_webmercator(LATITUDE_LYON, LONGITUDE_LYON)
         p_map = generate_map_plot(source_map, lyon_x, lyon_y, zoom_level=ZOOM_LEVEL)
-        p_step = generate_step_plot(source_step_plot)
-        p_line = generate_line_plot(source_step_plot)
+        p_step = generate_step_plot(source_history_plot)
+        p_line = generate_line_plot(source_history_plot)
+        p_line.visible = False
         data_table = generate_data_table(source_table)
-        data_table_url = generate_data_table_url(source_step_plot)
-
-        callback = create_selection_callback(source_map, source_step_plot, source_table, source_original)
+        data_table_url = generate_data_table_url(source_history_plot)
+      
+        callback = create_selection_callback(
+            source_original,
+            source_map,
+            source_history_plot,
+            source_table,
+            p_step,
+            p_line
+            )
         source_map.selected.on_change('indices', get_current_parking_id)
         source_map.selected.js_on_change('indices', callback)
 
         button_group = RadioButtonGroup(labels=["STEP PLOT", "LINE PLOT"], active=0)
         button_group.on_change("active", switch_plot)
 
-        update_delay_minute = UPDATE_FREQUENCY // 60000
-        title = Div(text=f'''
-                    <h1 style="text-align:center; color:black; font-size: 48px; margin-bottom: 5px;">
-                        Analyse en temps réel de l'occupation des parkings à Lyon
-                    </h1>
-                    <p style="text-align:center; color:black; font-size: 24px; margin-top: 0; padding-top: 0;">
-                        (mise à jour toutes les {update_delay_minute} minutes)
-                    </p>
-                ''')
-        history_plot = column(p_step)
+        title = get_layout_title(UPDATE_FREQUENCY)
+
+        history_plot = column([p_step, p_line])
+        p_line.visible = False
+     
         right_corner = column([history_plot, button_group])
         first_row = row([p_map, right_corner])
         bokeh_general_layout = column([title, first_row, data_table, data_table_url])
@@ -761,9 +856,10 @@ def main():
         curdoc().add_root(bokeh_general_layout)  
         curdoc().add_periodic_callback(update_sources, UPDATE_FREQUENCY)
 
-    except DatabaseConnectionError as e:
+    except DatabaseConnectionError:
         database_connection_error_count += 1
-        logger.warning(f"Database connection attempt failed. Total failures: {database_connection_error_count}")
+        error_msg = f"Database connection attempt failed. Total failures: {database_connection_error_count}"
+        logger.warning(error_msg, exc_info=True)
 
         if database_connection_error_count > 5:
             logger.critical("Database connection attempt failed over 5 times. Script stopped!")

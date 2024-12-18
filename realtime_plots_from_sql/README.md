@@ -56,7 +56,7 @@ The sub-repository is structured as follows:
                 - parking_general_information.csv  # Dataset with general information
             /scripts
                 /config
-                    - pgsql_config.py              # Configuration files for PostgreSQL database                    
+                    - config.py              # Configuration file for Bokeh Layout generation                           
                 - plot_realtime.py                 # Create Bokeh Document to be displayed on a Bokeh server
         - Dockerfile                               # Build the plot_realtime Docker image
         - requirements.txt                         # Dependencies for the plot_realtime Docker image

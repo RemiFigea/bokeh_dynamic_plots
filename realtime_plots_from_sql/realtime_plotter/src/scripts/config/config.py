@@ -28,8 +28,7 @@ class PgsqlConfig:
     """    
     PASSWORD = PGPASSWORD
     USER = "postgres"              
-    HOST = "172.17.0.1"
-    # HOST = "172.31.4.218"      
+    HOST = "172.17.0.1"     
     PORT = "5432"
     DATABASE = "parking_lyon_db"
     TABLE =  "parking_table"

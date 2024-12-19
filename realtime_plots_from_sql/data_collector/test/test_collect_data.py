@@ -1,8 +1,8 @@
 """
 Unit tests for functions of module collect_data.py.
 
-This script provides test cases for the `parking_state_has_changed` and 
-`collect_changes` functions, ensuring their correctness in detecting and 
+This script provides test cases for the "parking_state_has_changed" and 
+"collect_changes" functions, ensuring their correctness in detecting and 
 updating parking state changes based on new data.
 """
 

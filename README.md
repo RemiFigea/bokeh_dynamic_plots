@@ -61,8 +61,11 @@ The repository is structured as follows:
                     /config
                         - config.py                 # Configuration file for Bokeh Layout generation                    
                     - plot_realtime.py                  # Creates a Bokeh Document with Bokeh Layout objects
-            - Dockerfile                                # Build the "plot_realtime" Docker image
-            - requirements.txt                          # Dependencies for the "plot_realtime" Docker image
+                /test
+                    - test_plot_realtime.py            # Unit test for plot_realtime.py
+            - Dockerfile                               # Build the plot_realtime Docker image
+            - requirements.txt                         # Dependencies for the plot_realtime Docker image
+            - requirements_test.txt                    # Dependencies for the unit test
         /data_collector                                 # Folder to collect data on PostgreSQL database
             /src
                 /scripts
@@ -73,7 +76,7 @@ The repository is structured as follows:
                 - test_collect_data.py                  # Unit test for "collect_data.py"
             - Dockerfile                                # Build the "collect_data" image
             - requirements.txt                          # Dependencies for the "collect_data" Docker image
-        - README.md                                     # Documentation file for the sub-repository "realtime_plots_from_sql"
+        - README.md                               # Documentation file for the sub-repository "realtime_plots_from_sql"
 
     - README.md                                         # This documentation file
 ```

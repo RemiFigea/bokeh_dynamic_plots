@@ -49,6 +49,10 @@ logger = logging.getLogger(__name__)
 logger.addHandler(file_handler)  
 logger.setLevel(logging.INFO) 
 
+class DatabaseOperationError(Exception):
+    """Custom exception for errors related to database operations."""
+    pass
+
 class DataHandler:
     """
     A class responsible for loading, processing data into Bokeh ColumnDataSource.
@@ -217,12 +221,21 @@ class DataHandler:
             query = f"SELECT * FROM {table};"
 
             df_realtime = pd.read_sql_query(query, engine)
-
-        except DatabaseConnectionError as e:
+        except:
             error_msg = "Error attemting to fetch data from PostgreSQL"
             logger.error(error_msg, exc_info=True)
-            raise DatabaseConnectionError(error_msg)
-    
+            raise DatabaseOperationError(error_msg)
+
+        if df_realtime is None:
+            error_msg = "Error: Query result returned None instead of a valid dataframe."
+            logger.error(error_msg, exc_info=True)
+            raise DatabaseOperationError(error_msg)
+
+        if df_realtime.empty:
+            error_msg = f"Error: Query executed successfully, but the table '{table}' is empty."
+            logger.error(error_msg, exc_info=True)
+            raise DatabaseOperationError(error_msg)
+
         return df_realtime
 
     def validate_realtime_df_columns(self, df_realtime):
@@ -243,7 +256,7 @@ class DataHandler:
             DataFrame fetched from PostgreSQL database does not contain expected columns.\n
             Missing columns: {missing_columns}"""
             logger.error(error_msg)
-            raise ValueError()
+            raise ValueError(error_msg)
 
     def prepare_global_dataframe(self, df_realtime):
         """
@@ -297,23 +310,17 @@ class DataHandler:
         """
         Normalize a number to fit within a target range while preserving its relative position.
 
-        This function maps a given input value (`nb`) from an original data range (`data_range`) 
-        to a new expected target range (`expected_range`). The input number is scaled such that 
-        its relative position in `data_range` is maintained in `expected_range`.
+        Maps the input number ("nb") from the original range ("data_range") to a new range ("expected_range).
 
         Parameters:
-        - nb (float): The input number to be normalized.
-        - data_range (tuple of float): A tuple containing two floats representing the input's original range (min, max).
-            - data_range[0] (float): The lower bound of the input's original range.
-            - data_range[1] (float): The upper bound of the input's original range.
-        - expected_range (tuple of float): A tuple containing two floats representing the desired target range (min, max).
-            - expected_range[0] (float): The lower bound of the desired target range.
-            - expected_range[1] (float): The upper bound of the desired target range.
+        - nb (float): The number to normalize.
+        - data_range (tuple of float): The original range (min, max).
+        - expected_range (tuple of float): The target range (min, max).
 
         Returns:
-        - float: The normalized value scaled to fit within the `expected_range`.
+        - float: The normalized number within the "expected_range".
         """
-        result = nb
+        result =  (expected_range[0] + expected_range[1]) / 2
 
         if (data_range[1] - data_range[0]) != 0:
             result = expected_range[0] + (nb - data_range[0]) / (data_range[1] - data_range[0]) * (expected_range[1] - expected_range[0])
@@ -340,6 +347,7 @@ class DataHandler:
         normalized_circle_sizes = [DataHandler.normalize_number(x, available_spaces_range, self.circle_size_bounds)
                             for x in source_map.data["nombre_de_places_disponibles"]]
         source_map.data['normalized_circle_size'] = normalized_circle_sizes
+
 
     def update_sources(self):
             """
@@ -834,9 +842,6 @@ class BokehVisualizer:
 
         return self.bokeh_layout
 
-class DatabaseConnectionError(Exception):
-    """Custom exception for database connection errors."""
-    pass
 
 def validate_env_password(pgsql_config):
     """
@@ -922,7 +927,7 @@ def main():
         curdoc().add_root(layout)  
         curdoc().add_periodic_callback(visualizer.handler.update_sources, visualizer.update_frequency)
 
-    except DatabaseConnectionError:
+    except DatabaseOperationError:
         database_connection_error_count += 1
         error_msg = f"Database connection attempt failed. Total failures: {database_connection_error_count}"
         logger.warning(error_msg, exc_info=True)

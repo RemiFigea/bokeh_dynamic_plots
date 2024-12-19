@@ -65,7 +65,6 @@ The repository is structured as follows:
                     - test_plot_realtime.py            # Unit test for plot_realtime.py
             - Dockerfile                               # Build the plot_realtime Docker image
             - requirements.txt                         # Dependencies for the plot_realtime Docker image
-            - requirements_test.txt                    # Dependencies for the unit test
         /data_collector                                 # Folder to collect data on PostgreSQL database
             /src
                 /scripts

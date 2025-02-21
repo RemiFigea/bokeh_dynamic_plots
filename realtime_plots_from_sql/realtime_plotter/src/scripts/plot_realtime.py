@@ -29,7 +29,7 @@ import math
 import numpy as np
 import os
 import pandas as pd
-from scripts.config.config import BokehVisualizerConfig, DataHandlerConfig, PgsqlConfig 
+from config.config import BokehVisualizerConfig, DataHandlerConfig, PgsqlConfig 
 from sqlalchemy import create_engine
 import time
 import xyzservices.providers as xyz
@@ -927,8 +927,8 @@ def main():
 
         layout = visualizer.create_layout()
         
-        curdoc.add_root(layout)  
-        curdoc.add_periodic_callback(visualizer.handler.update_sources, visualizer.update_frequency)
+        curdoc().add_root(layout)  
+        curdoc().add_periodic_callback(visualizer.handler.update_sources, visualizer.update_frequency)
 
     except DatabaseOperationError:
         database_connection_error_count += 1

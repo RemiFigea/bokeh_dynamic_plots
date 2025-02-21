@@ -10,7 +10,7 @@ Here, we focus on visualizing parking occupancy data from Lyon, France, sourced 
 ## Quick Access to the Deployed App
 
 You can find the project deployed at the following address:
-http://35.181.43.132:5006/plot_realtime
+http://35.180.178.37:5006/plot_realtime
 
 If you prefer to deploy your own instance of the application, follow the steps in the **Getting Started** section of this README.
 
@@ -96,7 +96,10 @@ The sub-repository is structured as follows:
                 ferme BOOLEAN,
                 date TIMESTAMP
             );
+
+            CREATE INDEX idx_parking_date ON parking_table (date);
         ```
+    Note: Creating an index on the date column improves the performance of queries that filter or sort by date.
 
 2.  Allow Docker to Access the Database.
 

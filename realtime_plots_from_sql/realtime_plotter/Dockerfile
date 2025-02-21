@@ -16,7 +16,7 @@ EXPOSE 5006
 
 # To allow Bokeh server on a specific endpoint (e.g., a remote server IP)
 # Uncomment the following line and replace with the desired origin IP and port
-#CMD ["bokeh", "serve", "scripts/plot_realtime.py", "--allow-websocket-origin", "<IP_of_your_instance>:5006"]
+CMD ["bokeh", "serve", "scripts/plot_realtime.py", "--allow-websocket-origin", "35.180.178.37:5006"]
 
 # Default command to start Bokeh server without restricting origin
-CMD ["bokeh", "serve", "scripts/plot_realtime.py"]
+# CMD ["bokeh", "serve", "scripts/plot_realtime.py"]

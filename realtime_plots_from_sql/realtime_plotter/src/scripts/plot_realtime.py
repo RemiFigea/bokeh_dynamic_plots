@@ -29,7 +29,7 @@ import math
 import numpy as np
 import os
 import pandas as pd
-from config.config import BokehVisualizerConfig, DataHandlerConfig, PgsqlConfig 
+from scripts.config.config import BokehVisualizerConfig, DataHandlerConfig, PgsqlConfig 
 from sqlalchemy import create_engine
 import time
 import xyzservices.providers as xyz
@@ -218,8 +218,13 @@ class DataHandler:
         try:
             engine = create_engine(
                 f"postgresql://{user}:{password}@{host}:{port}/{database}")
-            query = f"SELECT * FROM {table};"
-
+            
+            # SQL query to fetch only data from the last two weeks to prevent EC2 instance crash
+            query = f"""
+                SELECT * 
+                FROM parking_table
+                WHERE date >= (SELECT MAX(date) FROM parking_table) - INTERVAL '15 days';
+                """
             df_realtime = pd.read_sql_query(query, engine)
         except:
             error_msg = "Error attemting to fetch data from PostgreSQL"
@@ -842,7 +847,6 @@ class BokehVisualizer:
 
         return self.bokeh_layout
 
-
 def validate_env_password(pgsql_config):
     """
     Validates that the PostgreSQL password is set in the environment configuration.
@@ -904,7 +908,7 @@ def main():
         handler = DataHandler(GENERAL_INFO_CSV_FILEPATH, pgsql_config, handler_config)
         handler.prepare_general_info_dataframe()
         handler.update_sources()
-
+        
         visualizer = BokehVisualizer(handler, visualizer_config)
         visualizer.create_map_plot()
         visualizer.create_step_plot()
@@ -913,7 +917,7 @@ def main():
         visualizer.create_data_table()
         visualizer.create_data_table_url()
         visualizer.create_switch_plot_button()
-
+        
         visualizer.create_selection_callback()
 
         # Update step, line, data_table, data_url on user selection
@@ -921,11 +925,10 @@ def main():
         # Update current_parking_id on user selection
         visualizer.handler.source_map.selected.on_change('indices', visualizer.get_current_parking_id)
 
-
         layout = visualizer.create_layout()
-     
-        curdoc().add_root(layout)  
-        curdoc().add_periodic_callback(visualizer.handler.update_sources, visualizer.update_frequency)
+        
+        curdoc.add_root(layout)  
+        curdoc.add_periodic_callback(visualizer.handler.update_sources, visualizer.update_frequency)
 
     except DatabaseOperationError:
         database_connection_error_count += 1
@@ -938,3 +941,4 @@ def main():
         time.sleep(60)
 
 main()
+

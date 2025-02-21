@@ -71,4 +71,4 @@ class BokehVisualizerConfig:
     LATITUDE_LYON = 45.764043
     LONGITUDE_LYON = 4.835659
     ZOOM_LEVEL = 10000
-    UPDATE_FREQUENCY = 60000 #1 minutes
+    UPDATE_FREQUENCY = 600000 #10 minutes

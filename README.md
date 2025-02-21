@@ -25,7 +25,7 @@ This repository demonstrates how Bokeh can be used to visualize parking occupanc
 
     - Access: Application is running on AWS EC2 instance connected to a AWS RDS instance at the following address:
 
-    http://35.181.43.132:5006/plot_realtime
+    http://35.180.178.37:5006/plot_realtime
 
 
 ### Data Sources
